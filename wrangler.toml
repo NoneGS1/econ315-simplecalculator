@@ -2,6 +2,9 @@ name = "econ315-score-bot"
 main = "src/index.js"
 compatibility_date = "2026-11-01"
 
+# Keep the *.workers.dev address on after every deploy (Telegram calls it).
+workers_dev = true
+
 # Secret (not stored here): BOT_TOKEN
 # Set it in the dashboard (Settings > Variables and Secrets) or with:
 #   npx wrangler secret put BOT_TOKEN
