@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grade Calculator</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-secondary-bg-color, #f1f2f6);
+    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --text: var(--tg-theme-text-color, #15171c);
+    --hint: var(--tg-theme-hint-color, #7d828c);
+    --accent: var(--tg-theme-button-color, #2f7cf6);
+    --accent-text: var(--tg-theme-button-text-color, #ffffff);
+    --line: color-mix(in srgb, var(--hint) 22%, transparent);
+    --track: color-mix(in srgb, var(--hint) 25%, transparent);
+    --good: #2fb36b;
+    --bad: #e5484d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tg]) {
+      --bg: #101114; --card: #1b1d22; --text: #eceef2; --hint: #8b919c; --accent: #5b9cff;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 520px; margin: 0 auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); }
+  h1 { font-size: 20px; margin: 4px 4px 2px; }
+  .sub { color: var(--hint); margin: 0 4px 14px; font-size: 13px; }
+  .card { background: var(--card); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+  .card h2 { font-size: 13px; font-weight: 600; color: var(--hint); text-transform: uppercase;
+    letter-spacing: .04em; margin: 0 0 10px; }
+
+  .field { padding: 8px 0; }
+  .field + .field { border-top: 1px solid var(--line); }
+  .field label { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-weight: 500; }
+  .field small { color: var(--hint); font-weight: 400; }
+  .num { width: 76px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line);
+    background: transparent; color: var(--text); font: inherit; font-weight: 600; text-align: right; }
+  input[type=range] { width: 100%; margin: 10px 0 2px; accent-color: var(--accent); height: 28px; }
+
+  .result { display: flex; align-items: center; gap: 16px; }
+  .badge { flex: none; width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-text); font-size: 30px; font-weight: 700; transition: background .2s; }
+  .badge.f { background: var(--bad); }
+  .stats { flex: 1; min-width: 0; }
+  .big { font-size: 26px; font-weight: 700; }
+  .big span { font-size: 15px; color: var(--hint); font-weight: 500; }
+  .row { display: flex; justify-content: space-between; color: var(--hint); font-size: 14px; margin-top: 2px; }
+  .row b { color: var(--text); }
+
+  .bar { position: relative; height: 10px; border-radius: 5px; background: var(--track); margin: 16px 0 22px; }
+  .bar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--accent); transition: width .15s; }
+  .bar .tick { position: absolute; top: -3px; width: 2px; height: 16px; background: var(--card); }
+  .bar .tick i { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-style: normal;
+    font-size: 10px; color: var(--hint); white-space: nowrap; }
+
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 4px; text-align: left; border-top: 1px solid var(--line); }
+  th { color: var(--hint); font-weight: 500; font-size: 13px; border-top: 0; padding-top: 0; }
+  td:last-child, th:last-child { text-align: right; }
+  tr.current td { color: var(--accent); font-weight: 700; }
+  .muted { color: var(--hint); }
+  .ok { color: var(--good); }
+  details { margin-top: 4px; }
+  summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+  .formula { color: var(--hint); font-size: 13px; margin-top: 8px; }
+  .note { text-align: center; color: var(--hint); font-size: 12px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Grade calculator</h1>
+  <p class="sub">ECON315 · Game Theory · Economics &amp; Data Science, Class of 2028</p>
+
+  <section class="card" aria-label="Your scores">
+    <div class="field">
+      <label for="midterm-n">Midterm <small>out of 100</small><input class="num" id="midterm-n" type="number" inputmode="decimal" min="0" max="100" step="0.5"></label>
+      <input id="midterm" type="range" min="0" max="100" step="0.5" aria-label="Midterm">
+    </div>
+    <div class="field">
+      <label for="final-n">Final <small>out of 100</small><input class="num" id="final-n" type="number" inputmode="decimal" min="0" max="100" step="0.5"></label>
+      <input id="final" type="range" min="0" max="100" step="0.5" aria-label="Final">
+    </div>
+    <div class="field">
+      <label for="bonus-n">Bonus <small>% (10 = ×1.10)</small><input class="num" id="bonus-n" type="number" inputmode="decimal" min="0" max="100" step="1"></label>
+      <input id="bonus" type="range" min="0" max="50" step="1" aria-label="Bonus">
+    </div>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <div class="result">
+      <div class="badge" id="badge">B+</div>
+      <div class="stats">
+        <div class="big" id="total">0 <span>/ 100</span></div>
+        <div class="row">30% part <b id="part">0 / 30</b></div>
+        <div class="row">Grade points <b id="points">0</b></div>
+      </div>
+    </div>
+    <div class="bar" id="bar"><div class="fill" id="fill"></div></div>
+    <details>
+      <summary>How it's calculated</summary>
+      <div class="formula" id="formula"></div>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>Final exam needed</h2>
+    <table>
+      <thead><tr><th>Grade</th><th>Total</th><th>Final needed</th></tr></thead>
+      <tbody id="needs"></tbody>
+    </table>
+  </section>
+
+  <p class="note">Calculated on your device. Nothing you enter is sent anywhere.</p>
+</main>
+
+<script type="module">
+  import { GRADES, compute, fmt, letterFor, requiredFinal } from "/calc.js";
+
+  const tg = window.Telegram?.WebApp;
+  if (tg?.initData !== undefined && tg.platform !== "unknown") {
+    document.documentElement.dataset.tg = "";
+    tg.ready();
+    tg.expand();
+  }
+
+  const $ = (id) => document.getElementById(id);
+  const fields = ["midterm", "final", "bonus"];
+  const defaults = { midterm: 70, final: 75, bonus: 0 };
+
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem("scores") || "{}"); } catch {}
+  const values = { ...defaults, ...saved };
+
+  // Grade thresholds on the progress bar.
+  for (const g of GRADES) {
+    if (!g.min) continue;
+    const t = document.createElement("div");
+    t.className = "tick";
+    t.style.left = `${g.min}%`;
+    t.innerHTML = `<i>${g.letter}</i>`;
+    $("bar").appendChild(t);
+  }
+
+  const clamp = (v, max) => Math.min(max, Math.max(0, Number.isFinite(v) ? v : 0));
+  let lastLetter;
+
+  function render() {
+    const r = compute(values.midterm, values.final, values.bonus);
+    const g = letterFor(r.courseTotal);
+    $("badge").textContent = g.letter;
+    $("badge").classList.toggle("f", g.letter === "F");
+    $("total").innerHTML = `${fmt(r.courseTotal)} <span>/ 100</span>`;
+    $("part").textContent = `${fmt(r.componentPoints)} / 30`;
+    $("points").textContent = fmt(g.points);
+    $("fill").style.width = `${r.courseTotal}%`;
+    $("formula").innerHTML = [
+      `1/3 × ${fmt(r.midterm)} + 2/3 × ${fmt(r.final)} = ${fmt(r.weighted)}`,
+      r.bonus ? `× ${fmt(r.multiplier)} bonus = ${fmt(r.boosted)}${r.capped ? " → capped at 100" : ""}` : null,
+      `30% part = ${fmt(r.component)} × 0.3 = ${fmt(r.componentPoints)}`,
+      `Total = ${fmt(r.midterm)} × 0.3 + ${fmt(r.final)} × 0.4 + ${fmt(r.componentPoints)} = ${fmt(r.courseTotal)}`,
+    ].filter(Boolean).join("<br>");
+
+    $("needs").innerHTML = GRADES.filter((x) => x.letter !== "F").map((x) => {
+      const need = requiredFinal(values.midterm, values.bonus, x.min);
+      const cell = need.final === null ? '<span class="muted">out of reach</span>'
+        : need.final === 0 ? '<span class="ok">any score</span>'
+        : fmt(need.final);
+      return `<tr class="${x.letter === g.letter ? "current" : ""}"><td>${x.letter}</td><td>${x.min}+</td><td>${cell}</td></tr>`;
+    }).join("");
+
+    if (lastLetter && lastLetter !== g.letter) tg?.HapticFeedback?.selectionChanged();
+    lastLetter = g.letter;
+    try { localStorage.setItem("scores", JSON.stringify(values)); } catch {}
+  }
+
+  for (const f of fields) {
+    const slider = $(f), box = $(`${f}-n`);
+    const max = Number(box.max);
+    slider.value = box.value = values[f];
+    slider.addEventListener("input", () => { values[f] = Number(slider.value); box.value = slider.value; render(); });
+    box.addEventListener("input", () => {
+      values[f] = clamp(parseFloat(box.value.replace(",", ".")), max);
+      slider.value = values[f];
+      render();
+    });
+    box.addEventListener("blur", () => { box.value = values[f]; });
+  }
+  render();
+</script>
+</body>
+</html>
