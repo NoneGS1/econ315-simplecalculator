@@ -1,6 +1,6 @@
 # econ315-simplecalculator
 
-A Telegram bot for the ECON315 group chat that calculates each student's 30% component:
+A Telegram bot for the ECON315 group chat that calculates each student's 30% component. It runs on Cloudflare Workers.
 
 ```
 component = min(100, (1/3 × midterm + 2/3 × final) × (1 + bonus%))
@@ -25,17 +25,26 @@ If an ephemeral reply isn't possible, the bot doesn't post marks in the group. I
 1. In Telegram, open **@BotFather**:
    - `/newbot` → pick a name. Copy the token.
    - `/setinline` → choose the bot → enter a placeholder such as `midterm final bonus`. This enables `@YourBot 72 85 10`.
-2. Add the bot to the group and **make it an admin** with the "Delete messages" right. The admin role lets it send ephemeral messages reliably. The delete right lets it remove commands that people typed visibly.
-3. Run it on any machine with Python 3.9+ (no dependencies):
+2. Deploy the Worker:
 
    ```bash
-   BOT_TOKEN=123456:ABC... python3 bot.py
+   npm install
+   npx wrangler deploy
    ```
 
-   The bot uses long polling, so it needs no public URL. Keep it running on a small always-on server, such as a VPS, a Raspberry Pi, or a free-tier cloud VM.
+3. Add the bot token as a secret named `BOT_TOKEN`. In the Cloudflare dashboard, go to **Workers & Pages → econ315-score-bot → Settings → Variables and Secrets → Add → Secret**. Or run:
+
+   ```bash
+   npx wrangler secret put BOT_TOKEN
+   ```
+
+4. Open `https://econ315-score-bot.<your-subdomain>.workers.dev/setup` once. This registers the Telegram webhook and the `/score` and `/help` commands. Repeat this step whenever the token changes.
+5. Add the bot to the group and **make it an admin** with the "Delete messages" right. The admin role lets it send ephemeral messages reliably. The delete right lets it remove commands that people typed visibly.
+
+Logs: `npx wrangler tail`, or the Worker's **Logs** tab in the dashboard.
 
 ## Tests
 
 ```bash
-python3 -m unittest -v
+npm test
 ```
