@@ -16,6 +16,10 @@ Midterm and final are out of 100. A bonus of 10 means ×1.10. The bot also shows
 | Any chat | `@YourBot 72 85 10` or `@YourBot need A 70 20` (don't send it; read the popup) | Only you, until you tap the result to post it |
 | Private chat with the bot | `/score 72 85 10` | Only you |
 
+`/calc` opens a calculator mini app with sliders (served from `public/app/`; all math runs on the phone).
+
+**Deadlines.** Group admins add them with `/deadline 05.12 23:59 Game Theory HW3`, inside the topic where reminders should go. The bot announces the deadline, then reminds that topic 3 days, 1 day and 3 hours before. Anyone can see the list privately with `/deadlines`. Admins can remove one with `/deadline_delete <id>`. Times use `TIMEZONE` in `wrangler.toml` (Asia/Tashkent).
+
 The bonus is optional (`/score 72 85`). Decimal commas work.
 
 If an ephemeral reply isn't possible, the bot doesn't post marks in the group. It tries to delete the visible command, sends the answer by DM instead, and if that fails too, posts a hint about how to get a private answer. As a safety net, any reply Telegram posts as a normal message is deleted immediately.
@@ -39,7 +43,10 @@ If an ephemeral reply isn't possible, the bot doesn't post marks in the group. I
    ```
 
 4. Open `https://econ315-score-bot.<your-subdomain>.workers.dev/setup` once. This registers the Telegram webhook and the `/score`, `/need` and `/help` commands. Repeat this step whenever the token or the command list changes.
-5. Add the bot to the group and **make it an admin** with the "Delete messages" right. The admin role lets it send ephemeral messages reliably. The delete right lets it remove commands that people typed visibly.
+5. Mini app: in @BotFather, open your bot → **Bot Settings** → **Configure Mini App** → enable it with the URL `https://econ315-score-bot.<your-subdomain>.workers.dev/app/`. This makes the `/calc` button work in groups. In private chats, `/setup` already adds a **Calculator** menu button.
+6. Add the bot to the group and **make it an admin** with the "Delete messages" right. The admin role lets it send ephemeral messages reliably. The delete right lets it remove commands that people typed visibly.
+
+Deadlines live in a SQLite Durable Object (`Store`), and a cron trigger checks for reminders every 15 minutes. Both are declared in `wrangler.toml`, so a deploy creates them.
 
 Logs: `npx wrangler tail`, or the Worker's **Logs** tab in the dashboard.
 

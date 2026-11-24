@@ -1,6 +1,6 @@
 // Reply texts, formatted with Telegram's HTML parse mode.
 
-import { GRADES, InputError, compute, findGrade, fmt, letterFor, parseNumbers, requiredFinal } from "./calc.js";
+import { GRADES, InputError, compute, findGrade, fmt, letterFor, parseNumbers, requiredFinal } from "../public/calc.js";
 
 export const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -135,5 +135,11 @@ export const helpMessage = () =>
     "<code>/need A 70 20</code> — for an A",
     "<code>/need 70 20</code> — for every grade",
     "",
+    "<b>/calc</b> — calculator app with sliders",
+    "<b>/deadlines</b> — upcoming deadlines",
+    "",
     "In the group, only you see my answers.",
+    "",
+    "<i>Admins: /deadline 05.12 23:59 Title adds a deadline in the current topic; " +
+      "I remind the topic 3 days, 1 day and 3 hours before. /deadline_delete id removes one.</i>",
   ].join("\n");

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { InputError, compute, letterFor, parseNumbers, requiredFinal } from "../src/calc.js";
+import { InputError, compute, letterFor, parseNumbers, requiredFinal } from "../public/calc.js";
 import { needReply, parseNeed, scoreReply } from "../src/messages.js";
 import { TelegramError, handleUpdate } from "../src/bot.js";
 import worker from "../src/index.js";

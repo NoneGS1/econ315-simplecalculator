@@ -5,6 +5,27 @@ compatibility_date = "2026-11-01"
 # Keep the *.workers.dev address on after every deploy (Telegram calls it).
 workers_dev = true
 
+# Group time zone for deadlines and reminders.
+[vars]
+TIMEZONE = "Asia/Tashkent"
+
+# Mini app files (public/app/) are served straight from here.
+[assets]
+directory = "./public"
+
+# Deadlines database: one SQLite-backed Durable Object.
+[[durable_objects.bindings]]
+name = "STORE"
+class_name = "Store"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Store"]
+
+# Check for reminders to send every 15 minutes.
+[triggers]
+crons = ["*/15 * * * *"]
+
 # Secret (not stored here): BOT_TOKEN
 # Set it in the dashboard (Settings > Variables and Secrets) or with:
 #   npx wrangler secret put BOT_TOKEN
