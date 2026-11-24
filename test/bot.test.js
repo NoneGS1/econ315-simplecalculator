@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { InputError, compute, parseArgs } from "../src/calc.js";
+import { InputError, compute, parseNumbers, requiredFinal } from "../src/calc.js";
+import { needReply, scoreReply } from "../src/messages.js";
 import { TelegramError, handleUpdate } from "../src/bot.js";
 import worker from "../src/index.js";
 
@@ -18,10 +19,28 @@ test("formula", () => {
 });
 
 test("parsing", () => {
-  assert.deepEqual(parseArgs("72 85"), [72, 85, 0]);
-  assert.deepEqual(parseArgs("72,5 85 10%"), [72.5, 85, 10]);
-  for (const bad of ["", "72", "a b", "1 2 3 4"]) assert.throws(() => parseArgs(bad), InputError);
+  assert.deepEqual(parseNumbers("72 85", 2, 3, "u"), [72, 85]);
+  assert.deepEqual(parseNumbers("72,5 85 10%", 2, 3, "u"), [72.5, 85, 10]);
+  for (const bad of ["", "72", "a b", "1 2 3 4"]) assert.throws(() => parseNumbers(bad, 2, 3, "u"), InputError);
   assert.throws(() => compute(120, 50), InputError);
+});
+
+test("required final for a D", () => {
+  // midterm 72, bonus 10: total(f) = 21.6 + 0.4f + 0.3*(24 + 2f/3)*1.1 = 29.52 + 0.62f
+  const r = requiredFinal(72, 10);
+  assert.equal(r.final, 16.91); // (40 - 29.52) / 0.62 = 16.903... -> rounded up
+  assert.ok(compute(72, r.final, 10).courseTotal >= 40);
+  assert.ok(compute(72, r.final - 0.01, 10).courseTotal < 40);
+  assert.equal(requiredFinal(100, 50).final, 0); // passes even with 0
+  assert.equal(requiredFinal(0, 0, 90).final, null); // unreachable
+});
+
+test("messages are valid HTML and show the key numbers", () => {
+  const s = scoreReply("72 85 10");
+  assert.match(s, /<b>26\.62 \/ 30<\/b>/);
+  assert.match(s, /<b>82\.22 \/ 100<\/b>/);
+  assert.match(needReply("72 10"), /<b>16\.91 \/ 100<\/b>/);
+  assert.match(scoreReply("<b> 1"), /&lt;b&gt;/); // user input is escaped
 });
 
 function fakeApi(override = () => undefined) {
@@ -50,9 +69,16 @@ test("ephemeral reply to an ephemeral command", async () => {
   await handleUpdate(api, "Econ315Bot", { message: groupMsg("/score 60 90 10", { ephemeral_message_id: 7 }) });
   const [method, p] = calls.at(-1);
   assert.equal(method, "sendMessage");
+  assert.equal(p.parse_mode, "HTML");
   assert.deepEqual(p.ephemeral_message_parameters, { receiver_user_id: 42 });
   assert.deepEqual(p.reply_parameters, { ephemeral_message_id: 7 });
-  assert.match(p.text, /88/);
+  assert.match(p.text, /26\.4 \/ 30/);
+});
+
+test("/need works in the group", async () => {
+  const { api, calls } = fakeApi();
+  await handleUpdate(api, "Econ315Bot", { message: groupMsg("/need@Econ315Bot 72 10", { ephemeral_message_id: 7 }) });
+  assert.match(calls.at(-1)[1].text, /16\.91/);
 });
 
 test("falls back to DM and deletes the visible command", async () => {
@@ -69,7 +95,7 @@ test("public hint never contains marks", async () => {
   await handleUpdate(api, "Econ315Bot", { message: groupMsg("/score 60 90") });
   const [, p] = calls.at(-1);
   assert.equal(p.chat_id, -100);
-  assert.doesNotMatch(p.text, /80/);
+  assert.doesNotMatch(p.text, /80|24/);
 });
 
 test("a reply posted publicly by mistake is deleted", async () => {
@@ -84,13 +110,16 @@ test("ignores commands for other bots", async () => {
   assert.equal(calls.length, 0);
 });
 
-test("inline query is personal", async () => {
+test("inline query: score and need", async () => {
   const { api, calls } = fakeApi();
   await handleUpdate(api, "Econ315Bot", { inline_query: { id: "q", query: "60 90 10" } });
-  const [method, p] = calls.at(-1);
+  let [method, p] = calls.at(-1);
   assert.equal(method, "answerInlineQuery");
   assert.ok(p.is_personal);
-  assert.match(p.results[0].title, /88/);
+  assert.match(p.results[0].title, /26\.4 \/ 30/);
+  await handleUpdate(api, "Econ315Bot", { inline_query: { id: "q", query: "need 72 10" } });
+  [, p] = calls.at(-1);
+  assert.match(p.results[0].title, /16\.91/);
 });
 
 test("worker rejects webhooks without the secret header", async () => {
