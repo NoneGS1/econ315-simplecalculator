@@ -138,7 +138,7 @@ function inlineResult(q, username) {
   if (!args.trim()) {
     return {
       title: need ? "Type: need [grade] midterm [bonus]" : "Type: midterm final [bonus]",
-      description: need ? "e.g. need A+ 98 50" : "e.g. 72 85 10  ·  or: need A+ 98 50",
+      description: need ? "e.g. need A 70 20" : "e.g. 72 85 10  ·  or: need A 70 20",
       body: helpMessage(),
     };
   }
