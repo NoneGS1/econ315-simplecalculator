@@ -6,17 +6,17 @@ A Telegram bot for the ECON315 group chat that calculates each student's 30% com
 component = min(100, (1/3 × midterm + 2/3 × final) × (1 + bonus%))
 ```
 
-Midterm and final are out of 100. A bonus of 10 means ×1.10. The bot also shows the component's points out of 30, and the course total: 30% midterm + 40% final + 30% component. `/need` gives the lowest final exam score that brings the course total to a D (40/100), or to a target you choose.
+Midterm and final are out of 100. A bonus of 10 means ×1.10. The bot also shows the component's points out of 30, and the course total: 30% midterm + 40% final + 30% component. `/score` also gives the letter grade (A+ 93+, A 85+, B+ 75+, B 65+, C+ 60+, C 50+, D 40+, F below 40). `/need` gives the lowest final exam score for a grade.
 
 ## How students use it
 
 | Where | Type | Who sees the answer |
 |---|---|---|
-| Group | `/score 72 85 10` or `/need 72 10` | Only the sender (ephemeral message, Bot API 10.2+) |
-| Any chat | `@YourBot 72 85 10` or `@YourBot need 72 10` (don't send it; read the popup) | Only you, until you tap the result to post it |
+| Group | `/score 72 85 10`, `/need A+ 98 50` or `/need 98 50` (every grade) | Only the sender (ephemeral message, Bot API 10.2+) |
+| Any chat | `@YourBot 72 85 10` or `@YourBot need A+ 98 50` (don't send it; read the popup) | Only you, until you tap the result to post it |
 | Private chat with the bot | `/score 72 85 10` | Only you |
 
-The bonus is optional (`/score 72 85`). `/need 72 10 60` asks for a total of 60 instead of 40. Decimal commas work.
+The bonus is optional (`/score 72 85`). Decimal commas work.
 
 If an ephemeral reply isn't possible, the bot doesn't post marks in the group. It tries to delete the visible command, sends the answer by DM instead, and if that fails too, posts a hint about how to get a private answer. As a safety net, any reply Telegram posts as a normal message is deleted immediately.
 

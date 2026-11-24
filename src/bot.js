@@ -1,14 +1,14 @@
 // Telegram update handling. `api(method, params)` calls the Bot API and
 // throws TelegramError on failure; it is injected so the logic can be tested.
 
-import { InputError, compute, fmt, parseNumbers, requiredFinal } from "./calc.js";
-import { NEED_USAGE, SCORE_USAGE, esc, helpMessage, needReply, scoreReply } from "./messages.js";
+import { InputError, compute, fmt, letterFor, parseNumbers, requiredFinal } from "./calc.js";
+import { NEED_USAGE, SCORE_USAGE, esc, helpMessage, needReply, parseNeed, scoreReply, startMessage } from "./messages.js";
 
 export class TelegramError extends Error {}
 
 export const COMMANDS = [
-  { command: "score", description: "Your 30% part and course total (only you see it)" },
-  { command: "need", description: "Final exam score you need to pass (only you see it)" },
+  { command: "score", description: "Your grade: /score midterm final [bonus]" },
+  { command: "need", description: "Final needed: /need [grade] midterm [bonus]" },
   { command: "help", description: "How to use the calculator" },
 ];
 
@@ -67,7 +67,8 @@ function parseCommand(text, username) {
 function replyFor(cmd, args, username) {
   if (cmd === "score") return args.trim() ? scoreReply(args) : esc(SCORE_USAGE);
   if (cmd === "need") return args.trim() ? needReply(args) : esc(NEED_USAGE);
-  if (cmd === "help" || cmd === "start") return helpMessage(username);
+  if (cmd === "help") return helpMessage();
+  if (cmd === "start") return startMessage();
   return null;
 }
 
@@ -136,25 +137,28 @@ function inlineResult(q, username) {
   const args = need ? q.replace(/^need\b/i, "") : q;
   if (!args.trim()) {
     return {
-      title: need ? "Type: need midterm [bonus]" : "Type: midterm final [bonus]",
-      description: need ? "e.g. need 72 10" : "e.g. 72 85 10  ·  or: need 72 10",
-      body: helpMessage(username),
+      title: need ? "Type: need [grade] midterm [bonus]" : "Type: midterm final [bonus]",
+      description: need ? "e.g. need A+ 98 50" : "e.g. 72 85 10  ·  or: need A+ 98 50",
+      body: helpMessage(),
     };
   }
   try {
     if (need) {
-      const [m, b = 0, t] = parseNumbers(args, 1, 3, NEED_USAGE);
-      const r = requiredFinal(m, b, t);
-      const title =
-        r.final === null ? "Not reachable, even with 100 on the final"
-        : r.final === 0 ? "You pass even with 0 on the final"
-        : `You need ${fmt(r.final)} / 100 on the final`;
+      const { grade, midterm, bonus } = parseNeed(args);
+      let title = "Final exam needed for each grade";
+      if (grade) {
+        const r = requiredFinal(midterm, bonus, grade.min);
+        title =
+          r.final === null ? `${grade.letter} is out of reach`
+          : r.final === 0 ? `You get ${grade.letter} even with 0 on the final`
+          : `${grade.letter}: you need ${fmt(r.final)} / 100 on the final`;
+      }
       return { title, body: needReply(args) };
     }
     const [m, f, b = 0] = parseNumbers(args, 2, 3, SCORE_USAGE);
     const r = compute(m, f, b);
     return {
-      title: `30% part: ${fmt(r.componentPoints)} / 30 · total ${fmt(r.courseTotal)} / 100`,
+      title: `${letterFor(r.courseTotal).letter} · total ${fmt(r.courseTotal)} / 100 · 30% part ${fmt(r.componentPoints)} / 30`,
       body: scoreReply(args),
     };
   } catch (e) {

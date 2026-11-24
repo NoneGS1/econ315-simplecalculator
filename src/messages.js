@@ -1,6 +1,6 @@
 // Reply texts, formatted with Telegram's HTML parse mode.
 
-import { InputError, PASS, compute, fmt, parseNumbers, requiredFinal } from "./calc.js";
+import { GRADES, InputError, compute, findGrade, fmt, letterFor, parseNumbers, requiredFinal } from "./calc.js";
 
 export const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -10,21 +10,22 @@ export const SCORE_USAGE =
   "Scores are out of 100; bonus is in % (10 means ×1.10).";
 
 export const NEED_USAGE =
-  "Usage: /need midterm [bonus] [target]\n" +
-  "Example: /need 72 10\n" +
-  `Shows the final exam score you need for a D (${PASS}/100), or for the target you give.`;
+  "Usage: /need [grade] midterm [bonus]\n" +
+  "Example: /need A+ 98 50 — final needed for an A+\n" +
+  "Example: /need 98 50 — final needed for every grade\n" +
+  "Grades: A+, A, B+, B, C+, C, D.";
 
 const bonusText = (b) => (b ? `+${fmt(b)}%` : "none");
 
 export function scoreMessage(r) {
-  const passed = r.courseTotal >= PASS;
+  const g = letterFor(r.courseTotal);
   return [
     "📊 <b>Your ECON315 score</b>",
     `Midterm <b>${fmt(r.midterm)}</b> · Final <b>${fmt(r.final)}</b> · Bonus <b>${bonusText(r.bonus)}</b>`,
     "",
     `🎯 30% part: <b>${fmt(r.componentPoints)} / 30</b>`,
     `🎓 Course total: <b>${fmt(r.courseTotal)} / 100</b>`,
-    passed ? `✅ Passing (D is ${PASS})` : `⚠️ Below the D line (${PASS})`,
+    g.letter === "F" ? "❌ Grade: <b>F</b> (below 40)" : `🏅 Grade: <b>${g.letter}</b> (${fmt(g.points)})`,
     "",
     "<blockquote expandable>🧮 <b>How it's calculated</b>",
     `1/3 × ${fmt(r.midterm)} + 2/3 × ${fmt(r.final)} = ${fmt(r.weighted)}`,
@@ -37,23 +38,21 @@ export function scoreMessage(r) {
     .join("\n");
 }
 
-export function needMessage(midterm, bonus, target) {
-  const goal = target === PASS ? `a D (${PASS}/100)` : `${fmt(target)}/100`;
+// Final needed for one grade.
+export function needGradeMessage(grade, midterm, bonus) {
   const head = [
-    `🎯 <b>Final exam needed for ${goal}</b>`,
+    `🎯 <b>Final exam needed for ${grade.letter}</b> (total ${grade.min}+)`,
     `Midterm <b>${fmt(midterm)}</b> · Bonus <b>${bonusText(bonus)}</b>`,
     "",
   ];
-  const r = requiredFinal(midterm, bonus, target);
+  const r = requiredFinal(midterm, bonus, grade.min);
   if (r.final === null) {
     return [...head,
-      "❌ Not reachable this way.",
-      `Even 100 on the final gives <b>${fmt(r.best)} / 100</b>.`].join("\n");
+      `❌ ${grade.letter} is out of reach.`,
+      `Even 100 on the final gives <b>${fmt(r.best)} / 100</b> (${letterFor(r.best).letter}).`].join("\n");
   }
   if (r.final === 0) {
-    return [...head,
-      "🎉 You reach it even with <b>0</b> on the final",
-      `(that would give ${fmt(r.atZero)} / 100).`].join("\n");
+    return [...head, `🎉 You get ${grade.letter} even with <b>0</b> on the final.`].join("\n");
   }
   const s = compute(midterm, r.final, bonus);
   return [...head,
@@ -64,32 +63,77 @@ export function needMessage(midterm, bonus, target) {
     `Course total: ${fmt(s.courseTotal)} / 100</blockquote>`].join("\n");
 }
 
+// Final needed for every grade, as an aligned table.
+export function needTableMessage(midterm, bonus) {
+  const rows = GRADES.filter((g) => g.letter !== "F").map((g) => {
+    const r = requiredFinal(midterm, bonus, g.min);
+    const need = r.final === null ? "out of reach" : r.final === 0 ? "any score" : fmt(r.final);
+    return `${g.letter.padEnd(6)}${`${g.min}+`.padEnd(6)}${need}`;
+  });
+  return [
+    "🎯 <b>Final exam needed for each grade</b>",
+    `Midterm <b>${fmt(midterm)}</b> · Bonus <b>${bonusText(bonus)}</b>`,
+    "",
+    "<pre>Grade Total Final needed",
+    ...rows,
+    "</pre>",
+    "For one grade: <code>/need A+ " + fmt(midterm) + (bonus ? " " + fmt(bonus) : "") + "</code>",
+  ].join("\n");
+}
+
 const errorText = (e) => `⚠️ ${esc(e.message)}`;
 
-export function scoreReply(args) {
+function guard(fn) {
   try {
-    const [m, f, b = 0] = parseNumbers(args, 2, 3, SCORE_USAGE);
-    return scoreMessage(compute(m, f, b));
+    return fn();
   } catch (e) {
     if (e instanceof InputError) return errorText(e);
     throw e;
   }
 }
 
-export function needReply(args) {
-  try {
-    const [m, b = 0, t = PASS] = parseNumbers(args, 1, 3, NEED_USAGE);
-    return needMessage(m, b, t);
-  } catch (e) {
-    if (e instanceof InputError) return errorText(e);
-    throw e;
+export const scoreReply = (args) =>
+  guard(() => {
+    const [m, f, b = 0] = parseNumbers(args, 2, 3, SCORE_USAGE);
+    return scoreMessage(compute(m, f, b));
+  });
+
+// "/need A+ 98 50" or "/need 98 50". Returns { grade, midterm, bonus }.
+export function parseNeed(args) {
+  const text = args.trim();
+  const first = text.split(/\s+/)[0] ?? "";
+  if (/^[a-z]/i.test(first)) {
+    const grade = findGrade(first);
+    if (!grade) throw new InputError(`"${first}" is not a grade.\n\n${NEED_USAGE}`);
+    const [midterm, bonus = 0] = parseNumbers(text.slice(first.length), 1, 2, NEED_USAGE);
+    return { grade, midterm, bonus };
   }
+  const [midterm, bonus = 0] = parseNumbers(text, 1, 2, NEED_USAGE);
+  return { grade: null, midterm, bonus };
 }
+
+export const needReply = (args) =>
+  guard(() => {
+    const { grade, midterm, bonus } = parseNeed(args);
+    return grade ? needGradeMessage(grade, midterm, bonus) : needTableMessage(midterm, bonus);
+  });
+
+export const startMessage = () =>
+  "👋 I'm a helper bot for the <b>Economics &amp; Data Science — Class of 2028</b> group chat.\n\n" +
+  "Send /help to see what I can do.";
 
 export const helpMessage = () =>
   [
-    "👋 I'm a helper bot for the <b>Economics &amp; Data Science — Class of 2028</b> group chat.",
+    "🧮 <b>Commands</b>",
     "",
-    "/score — your grade, e.g. <code>/score 72 85 10</code>",
-    "/need — final exam score you need to pass, e.g. <code>/need 72 10</code>",
+    "<b>/score</b> midterm final [bonus]",
+    "Your 30% part, course total and letter grade.",
+    "<code>/score 72 85 10</code>",
+    "",
+    "<b>/need</b> [grade] midterm [bonus]",
+    "Final exam score you need for a grade.",
+    "<code>/need A+ 98 50</code> — for an A+",
+    "<code>/need 98 50</code> — for every grade",
+    "",
+    "In the group, only you see my answers.",
   ].join("\n");
