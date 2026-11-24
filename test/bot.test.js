@@ -100,6 +100,18 @@ test("/need works in the group", async () => {
   assert.match(calls.at(-1)[1].text, /86\.88 \/ 100/);
 });
 
+test("replies in the same forum topic", async () => {
+  const { api, calls } = fakeApi();
+  const msg = groupMsg("/score 60 90", { ephemeral_message_id: 7, message_thread_id: 55, is_topic_message: true });
+  msg.chat = { ...msg.chat, is_forum: true };
+  await handleUpdate(api, "Econ315Bot", { message: msg });
+  assert.equal(calls.at(-1)[1].message_thread_id, 55);
+  // not in groups without topics
+  const plain = fakeApi();
+  await handleUpdate(plain.api, "Econ315Bot", { message: groupMsg("/score 60 90", { ephemeral_message_id: 7, message_thread_id: 9 }) });
+  assert.equal(plain.calls.at(-1)[1].message_thread_id, undefined);
+});
+
 test("falls back to DM and deletes the visible command", async () => {
   const { api, calls } = fakeApi((m, p) => (p.ephemeral_message_parameters ? new TelegramError("no") : undefined));
   await handleUpdate(api, "Econ315Bot", { message: groupMsg("/score 60 90") });
