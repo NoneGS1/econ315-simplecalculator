@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { InputError, compute, parseNumbers, requiredFinal } from "../src/calc.js";
-import { needReply, scoreReply } from "../src/messages.js";
+import { InputError, compute, letterFor, parseNumbers, requiredFinal } from "../src/calc.js";
+import { needReply, parseNeed, scoreReply } from "../src/messages.js";
 import { TelegramError, handleUpdate } from "../src/bot.js";
 import worker from "../src/index.js";
 
@@ -35,11 +35,28 @@ test("required final for a D", () => {
   assert.equal(requiredFinal(0, 0, 90).final, null); // unreachable
 });
 
+test("letter grades", () => {
+  assert.equal(letterFor(93).letter, "A+");
+  assert.equal(letterFor(92.9).letter, "A");
+  assert.equal(letterFor(40).letter, "D");
+  assert.equal(letterFor(39.9).letter, "F");
+  assert.equal(parseNeed("a+ 98 50").grade.letter, "A+");
+  assert.equal(parseNeed("98 50").grade, null);
+  assert.throws(() => parseNeed("Z 98"), InputError);
+  // midterm 98, bonus 50: the 30% part is capped above final 51, so A+ needs
+  // 29.4 + 0.4f + 30 >= 93  ->  f = 84
+  assert.equal(requiredFinal(98, 50, 93).final, 84);
+  assert.match(needReply("A+ 98 50"), /<b>84 \/ 100<\/b>/);
+  assert.match(needReply("A+ 10"), /out of reach/);
+});
+
 test("messages are valid HTML and show the key numbers", () => {
   const s = scoreReply("72 85 10");
   assert.match(s, /<b>26\.62 \/ 30<\/b>/);
   assert.match(s, /<b>82\.22 \/ 100<\/b>/);
-  assert.match(needReply("72 10"), /<b>16\.91 \/ 100<\/b>/);
+  assert.match(needReply("D 72 10"), /<b>16\.91 \/ 100<\/b>/);
+  assert.match(needReply("72 10"), /<pre>[\s\S]*D     40\+   16\.91/);
+  assert.match(s, /Grade: <b>B\+<\/b>/);
   assert.match(scoreReply("<b> 1"), /&lt;b&gt;/); // user input is escaped
 });
 
@@ -77,8 +94,8 @@ test("ephemeral reply to an ephemeral command", async () => {
 
 test("/need works in the group", async () => {
   const { api, calls } = fakeApi();
-  await handleUpdate(api, "Econ315Bot", { message: groupMsg("/need@Econ315Bot 72 10", { ephemeral_message_id: 7 }) });
-  assert.match(calls.at(-1)[1].text, /16\.91/);
+  await handleUpdate(api, "Econ315Bot", { message: groupMsg("/need@Econ315Bot A+ 98 50", { ephemeral_message_id: 7 }) });
+  assert.match(calls.at(-1)[1].text, /84 \/ 100/);
 });
 
 test("falls back to DM and deletes the visible command", async () => {
@@ -116,10 +133,10 @@ test("inline query: score and need", async () => {
   let [method, p] = calls.at(-1);
   assert.equal(method, "answerInlineQuery");
   assert.ok(p.is_personal);
-  assert.match(p.results[0].title, /26\.4 \/ 30/);
-  await handleUpdate(api, "Econ315Bot", { inline_query: { id: "q", query: "need 72 10" } });
+  assert.match(p.results[0].title, /^B\+ .*26\.4 \/ 30/);
+  await handleUpdate(api, "Econ315Bot", { inline_query: { id: "q", query: "need A+ 98 50" } });
   [, p] = calls.at(-1);
-  assert.match(p.results[0].title, /16\.91/);
+  assert.match(p.results[0].title, /A\+: you need 84/);
 });
 
 test("worker rejects webhooks without the secret header", async () => {

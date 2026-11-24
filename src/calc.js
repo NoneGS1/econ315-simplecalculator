@@ -8,6 +8,23 @@
 export const PASS = 40; // D
 const CAP = 100;
 
+// Letter grades by course total (cumulative grade), from the course syllabus.
+export const GRADES = [
+  { letter: "A+", min: 93, points: 4.5 },
+  { letter: "A", min: 85, points: 4.0 },
+  { letter: "B+", min: 75, points: 3.5 },
+  { letter: "B", min: 65, points: 3.0 },
+  { letter: "C+", min: 60, points: 2.75 },
+  { letter: "C", min: 50, points: 2.5 },
+  { letter: "D", min: 40, points: 2.0 },
+  { letter: "F", min: 0, points: 0 },
+];
+
+export const letterFor = (total) => GRADES.find((g) => total >= g.min);
+
+export const findGrade = (text) =>
+  GRADES.find((g) => g.letter !== "F" && g.letter === text.trim().toUpperCase().replace(/\s+/g, ""));
+
 export class InputError extends Error {}
 
 export const fmt = (x) => String(Number(x.toFixed(2)));
