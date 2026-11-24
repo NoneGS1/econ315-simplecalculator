@@ -12,8 +12,8 @@ Midterm and final are out of 100. A bonus of 10 means ×1.10. The bot also shows
 
 | Where | Type | Who sees the answer |
 |---|---|---|
-| Group | `/score 72 85 10`, `/need A+ 98 50` or `/need 98 50` (every grade) | Only the sender (ephemeral message, Bot API 10.2+) |
-| Any chat | `@YourBot 72 85 10` or `@YourBot need A+ 98 50` (don't send it; read the popup) | Only you, until you tap the result to post it |
+| Group | `/score 72 85 10`, `/need A 70 20` or `/need 70 20` (every grade) | Only the sender (ephemeral message, Bot API 10.2+) |
+| Any chat | `@YourBot 72 85 10` or `@YourBot need A 70 20` (don't send it; read the popup) | Only you, until you tap the result to post it |
 | Private chat with the bot | `/score 72 85 10` | Only you |
 
 The bonus is optional (`/score 72 85`). Decimal commas work.

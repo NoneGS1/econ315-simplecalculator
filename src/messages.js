@@ -11,8 +11,8 @@ export const SCORE_USAGE =
 
 export const NEED_USAGE =
   "Usage: /need [grade] midterm [bonus]\n" +
-  "Example: /need A+ 98 50 — final needed for an A+\n" +
-  "Example: /need 98 50 — final needed for every grade\n" +
+  "Example: /need A 70 20 — final needed for an A\n" +
+  "Example: /need 70 20 — final needed for every grade\n" +
   "Grades: A+, A, B+, B, C+, C, D.";
 
 const bonusText = (b) => (b ? `+${fmt(b)}%` : "none");
@@ -98,7 +98,7 @@ export const scoreReply = (args) =>
     return scoreMessage(compute(m, f, b));
   });
 
-// "/need A+ 98 50" or "/need 98 50". Returns { grade, midterm, bonus }.
+// "/need A 70 20" or "/need 70 20". Returns { grade, midterm, bonus }.
 export function parseNeed(args) {
   const text = args.trim();
   const first = text.split(/\s+/)[0] ?? "";
@@ -132,8 +132,8 @@ export const helpMessage = () =>
     "",
     "<b>/need</b> [grade] midterm [bonus]",
     "Final exam score you need for a grade.",
-    "<code>/need A+ 98 50</code> — for an A+",
-    "<code>/need 98 50</code> — for every grade",
+    "<code>/need A 70 20</code> — for an A",
+    "<code>/need 70 20</code> — for every grade",
     "",
     "In the group, only you see my answers.",
   ].join("\n");

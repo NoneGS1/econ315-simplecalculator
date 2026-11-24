@@ -12,7 +12,7 @@ test("formula", () => {
   close(compute(60, 90).component, 80);
   close(compute(60, 90).componentPoints, 24);
   close(compute(60, 90, 10).component, 88); // 80 * 1.1
-  const capped = compute(95, 98, 20);
+  const capped = compute(95, 97, 20);
   assert.equal(capped.component, 100);
   assert.ok(capped.capped);
   close(compute(60, 90, 10).courseTotal, 0.3 * 60 + 0.4 * 90 + 0.3 * 88);
@@ -40,13 +40,15 @@ test("letter grades", () => {
   assert.equal(letterFor(92.9).letter, "A");
   assert.equal(letterFor(40).letter, "D");
   assert.equal(letterFor(39.9).letter, "F");
-  assert.equal(parseNeed("a+ 98 50").grade.letter, "A+");
-  assert.equal(parseNeed("98 50").grade, null);
-  assert.throws(() => parseNeed("Z 98"), InputError);
-  // midterm 98, bonus 50: the 30% part is capped above final 51, so A+ needs
-  // 29.4 + 0.4f + 30 >= 93  ->  f = 84
-  assert.equal(requiredFinal(98, 50, 93).final, 84);
-  assert.match(needReply("A+ 98 50"), /<b>84 \/ 100<\/b>/);
+  assert.equal(parseNeed("a+ 70 20").grade.letter, "A+");
+  assert.equal(parseNeed("70 20").grade, null);
+  assert.throws(() => parseNeed("Z 70"), InputError);
+  // midterm 70, bonus 20: 30% part = (70/3 + 2f/3) * 1.2 = 28 + 0.8f (below the cap),
+  // total = 21 + 0.4f + 0.3 * (28 + 0.8f) = 29.4 + 0.64f >= 85  ->  f = 86.875 -> 86.88
+  assert.equal(requiredFinal(70, 20, 85).final, 86.88);
+  assert.match(needReply("A 70 20"), /<b>86\.88 \/ 100<\/b>/);
+  // above final 90 the part is capped: 51 + 0.4f >= 93 needs f = 105
+  assert.match(needReply("A+ 70 20"), /out of reach/);
   assert.match(needReply("A+ 10"), /out of reach/);
 });
 
@@ -94,8 +96,8 @@ test("ephemeral reply to an ephemeral command", async () => {
 
 test("/need works in the group", async () => {
   const { api, calls } = fakeApi();
-  await handleUpdate(api, "Econ315Bot", { message: groupMsg("/need@Econ315Bot A+ 98 50", { ephemeral_message_id: 7 }) });
-  assert.match(calls.at(-1)[1].text, /84 \/ 100/);
+  await handleUpdate(api, "Econ315Bot", { message: groupMsg("/need@Econ315Bot A 70 20", { ephemeral_message_id: 7 }) });
+  assert.match(calls.at(-1)[1].text, /86\.88 \/ 100/);
 });
 
 test("falls back to DM and deletes the visible command", async () => {
@@ -134,9 +136,9 @@ test("inline query: score and need", async () => {
   assert.equal(method, "answerInlineQuery");
   assert.ok(p.is_personal);
   assert.match(p.results[0].title, /^B\+ .*26\.4 \/ 30/);
-  await handleUpdate(api, "Econ315Bot", { inline_query: { id: "q", query: "need A+ 98 50" } });
+  await handleUpdate(api, "Econ315Bot", { inline_query: { id: "q", query: "need A 70 20" } });
   [, p] = calls.at(-1);
-  assert.match(p.results[0].title, /A\+: you need 84/);
+  assert.match(p.results[0].title, /A: you need 86\.88/);
 });
 
 test("worker rejects webhooks without the secret header", async () => {
