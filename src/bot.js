@@ -86,10 +86,13 @@ async function replyPrivatelyInGroup(api, username, msg, reply) {
   const chatId = msg.chat.id;
   const user = msg.from;
   const ephId = msg.ephemeral_message_id;
+  // In groups with topics, answer in the topic the command was sent from
+  // (otherwise Telegram puts the reply in "General").
+  const topic = msg.chat.is_forum && msg.message_thread_id ? { message_thread_id: msg.message_thread_id } : {};
 
   let sent = false;
   try {
-    await sendEphemeral(api, chatId, user.id, reply, ephId);
+    await sendEphemeral(api, chatId, user.id, reply, ephId, topic);
     sent = true;
   } catch (e) {
     console.log(`Ephemeral reply failed: ${e.message}`);
@@ -106,6 +109,7 @@ async function replyPrivatelyInGroup(api, username, msg, reply) {
   // Fallback 2: explain how to get a private answer, without echoing any marks.
   await tryCall(api, "sendMessage", {
     chat_id: chatId,
+    ...topic,
     text:
       `${esc(user.first_name ?? "Hi")}, I couldn't answer you privately here. Either message me at ` +
       `@${esc(username)} (press Start once), or type <code>@${esc(username)} 72 85 10</code> ` +
@@ -114,9 +118,10 @@ async function replyPrivatelyInGroup(api, username, msg, reply) {
   });
 }
 
-async function sendEphemeral(api, chatId, userId, text, ephId) {
+async function sendEphemeral(api, chatId, userId, text, ephId, topic = {}) {
   const params = {
     chat_id: chatId,
+    ...topic,
     text,
     ...HTML,
     ephemeral_message_parameters: { receiver_user_id: userId },
