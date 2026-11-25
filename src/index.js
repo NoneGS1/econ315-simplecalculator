@@ -11,6 +11,7 @@
 import { handleUpdate, makeApi, registerCommands, registerMenuButton } from "./bot.js";
 import { reminderText } from "./deadlines.js";
 import { DeadlineStore } from "./store.js";
+import { deadlinesForUser, validateInitData } from "./webapp.js";
 
 let cachedUsername;
 
@@ -29,7 +30,7 @@ export class Store {
 
   async fetch(request) {
     const { method, args } = await request.json();
-    if (!["add", "upcoming", "remove", "takeDue"].includes(method)) return new Response("bad method", { status: 400 });
+    if (!["add", "upcoming", "allUpcoming", "remove", "takeDue"].includes(method)) return new Response("bad method", { status: 400 });
     return Response.json(this.db[method](...args) ?? null);
   }
 }
@@ -45,6 +46,7 @@ function storeClient(env) {
   return {
     add: (d) => call("add", d),
     upcoming: (chatId, now) => call("upcoming", chatId, now),
+    allUpcoming: (now) => call("allUpcoming", now),
     remove: (chatId, id) => call("remove", chatId, id),
     takeDue: (now) => call("takeDue", now),
   };
@@ -72,6 +74,21 @@ export default {
         console.error(`update ${update.update_id}: ${e.stack ?? e}`);
       }
       return new Response("ok"); // always 200 so Telegram doesn't resend
+    }
+
+    // Mini app: deadlines for the signed-in Telegram user.
+    if (url.pathname === "/api/deadlines") {
+      const user = await validateInitData(request.headers.get("X-Telegram-Init-Data"), env.BOT_TOKEN);
+      if (!user) return Response.json({ error: "Open the app from Telegram." }, { status: 401 });
+      const store = storeClient(env);
+      if (!store) return Response.json({ tz: tzOf(env), deadlines: [] });
+      try {
+        const deadlines = await deadlinesForUser(api, store, user.id);
+        return Response.json({ tz: tzOf(env), deadlines }, { headers: { "Cache-Control": "no-store" } });
+      } catch (e) {
+        console.error(`api/deadlines: ${e.stack ?? e}`);
+        return Response.json({ error: "Couldn't load deadlines." }, { status: 502 });
+      }
     }
 
     if (url.pathname === "/setup") {

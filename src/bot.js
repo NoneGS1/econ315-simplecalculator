@@ -8,13 +8,11 @@ import { NEED_USAGE, SCORE_USAGE, esc, helpMessage, needReply, parseNeed, scoreR
 
 export class TelegramError extends Error {}
 
-// Commands everyone sees in the menu; all answered privately.
+// Commands everyone sees in the menu; all answered privately. /score, /need,
+// /materials, /deadlines and /calc still work but are left out of the menu,
+// since /app covers them.
 export const COMMANDS = [
-  { command: "score", description: "Your grade: /score midterm final [bonus]" },
-  { command: "need", description: "Final needed: /need [grade] midterm [bonus]" },
-  { command: "app", description: "Open the class app: grades, GPA, materials" },
-  { command: "materials", description: "Course materials and syllabuses" },
-  { command: "deadlines", description: "Upcoming deadlines" },
+  { command: "app", description: "Grades, GPA, materials and deadlines" },
   { command: "help", description: "How to use the bot" },
 ];
 
