@@ -91,6 +91,11 @@
   .links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .link { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 8px; border-radius: 10px;
     background: var(--soft); color: var(--accent); font-weight: 600; font-size: 14px; text-decoration: none; }
+  .sublabel { color: var(--hint); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin: 14px 0 2px; }
+  .olink { display: flex; align-items: center; gap: 10px; padding: 10px 0; color: var(--text); text-decoration: none; border-top: 1px solid var(--line); }
+  .olink:first-of-type { border-top: 0; }
+  .olink .t { flex: 1; }
+  .olink .arrow { color: var(--hint); font-size: 18px; }
   .foot { text-align: center; color: var(--hint); font-size: 12px; margin-top: 4px; }
 
   .course { display: flex; align-items: center; gap: 12px; padding: 10px 0; cursor: pointer; }
@@ -241,9 +246,12 @@
       <section class="card">
         <h2>Materials</h2>
         <div class="links">
-          <a class="link" href="${c.materials}" data-link>📁 Course materials</a>
+          <a class="link" href="${c.materials}" data-link>📁 ${c.materialsByProfessor ? "Professor's Drive" : "Class Drive"}</a>
           <a class="link" href="${c.syllabus}" data-link>📄 Syllabus</a>
         </div>
+        ${c.links?.length ? `<div class="sublabel">From the professor</div>
+          ${c.links.map((l) => `<a class="olink" href="${l.url}" data-link><span>${l.icon}</span><span class="t">${l.label}</span><span class="arrow">›</span></a>`).join("")}` : ""}
+        ${c.materialsByProfessor ? "" : '<p class="note">The class Drive is kept up to date by classmates.</p>'}
       </section>
       <section class="card">
         <h2>${c.name} <span>${c.code} · ${c.credits} cr</span></h2>
