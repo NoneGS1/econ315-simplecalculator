@@ -2,6 +2,7 @@
 // throws TelegramError on failure; it is injected so the logic can be tested.
 
 import { InputError, compute, fmt, letterFor, parseNumbers, requiredFinal } from "../public/calc.js";
+import { COURSES } from "../public/courses.js";
 import { deadlineCommand } from "./deadlines.js";
 import { NEED_USAGE, SCORE_USAGE, esc, helpMessage, needReply, parseNeed, scoreReply, startMessage } from "./messages.js";
 
@@ -12,6 +13,7 @@ export const COMMANDS = [
   { command: "score", description: "Your grade: /score midterm final [bonus]" },
   { command: "need", description: "Final needed: /need [grade] midterm [bonus]" },
   { command: "calc", description: "Open the grade calculator app" },
+  { command: "materials", description: "Course materials and syllabuses" },
   { command: "deadlines", description: "Upcoming deadlines" },
   { command: "help", description: "How to use the bot" },
 ];
@@ -93,6 +95,19 @@ function replyFor(cmd, args) {
   return null;
 }
 
+// One row per course: Drive folder + syllabus post.
+export function materialsReply() {
+  return {
+    text: "📚 <b>Course materials</b>\nDrive folders with lecture files, and the syllabus for each course.",
+    markup: {
+      inline_keyboard: COURSES.map((c) => [
+        { text: `📁 ${c.short}`, url: c.materials },
+        { text: "📄 Syllabus", url: c.syllabus },
+      ]),
+    },
+  };
+}
+
 function calcReply(msg, username, appUrl) {
   // web_app buttons only work in private chats; in groups, link to the bot's
   // main mini app instead (set up once in @BotFather).
@@ -120,6 +135,8 @@ async function onCommand(api, username, msg, opts) {
     reply = { text: out.private };
   } else if (cmd === "calc") {
     reply = calcReply(msg, username, opts.appUrl);
+  } else if (cmd === "materials") {
+    reply = materialsReply();
   } else {
     const text = replyFor(cmd, args);
     if (text === null) return;
