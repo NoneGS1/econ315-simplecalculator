@@ -117,3 +117,18 @@ test("/calc links to the mini app", async () => {
   await handleUpdate(api, "Econ315Bot", { message: { ...forumMsg("/calc"), chat: { id: 42, type: "private" } } }, { appUrl: "https://x/app/" });
   assert.equal(calls.at(-1)[1].reply_markup.inline_keyboard[0][0].web_app.url, "https://x/app/");
 });
+
+test("/materials: a Drive and a syllabus button per course, answered privately", async () => {
+  const { api, calls } = fakeApi();
+  await handleUpdate(api, "Econ315Bot", { message: forumMsg("/materials", { ephemeral_message_id: 3 }) }, {});
+  const [, p] = calls.at(-1);
+  assert.deepEqual(p.ephemeral_message_parameters, { receiver_user_id: 42 });
+  assert.equal(p.message_thread_id, 77);
+  const rows = p.reply_markup.inline_keyboard;
+  assert.equal(rows.length, 5);
+  for (const [drive, syl] of rows) {
+    assert.match(drive.url, /^https:\/\/drive\.google\.com\/drive\/folders\//);
+    assert.match(syl.url, /^https:\/\/t\.me\/c\/3803621408\/5\/\d+$/);
+  }
+  assert.equal(new Set(rows.map(([d]) => d.url)).size, 5); // no two courses share a folder
+});

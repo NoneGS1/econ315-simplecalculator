@@ -3,11 +3,17 @@
 
 import { GRADES, letterFor } from "./calc.js";
 
+const drive = (id) => `https://drive.google.com/drive/folders/${id}?usp=sharing`;
+// Syllabus posts in the class group (open for group members only).
+const syllabus = (msg) => `https://t.me/c/3803621408/5/${msg}`;
+
 // A part is one graded item. `count` makes it a group of equal items
 // (e.g. 6 quizzes); `best` keeps only the best N of them.
 export const COURSES = [
   {
     id: "gt", name: "Game Theory for Economics", short: "Game Theory", code: "ECON315", credits: 6,
+    materials: drive("17Q16zR2QNTsDfUTSy3A7qEzvnLQZ9l_Y"),
+    syllabus: syllabus(3213),
     finalWeight: 40,
     parts: [
       { key: "midterm", label: "Midterm", weight: 30 },
@@ -19,6 +25,8 @@ export const COURSES = [
   },
   {
     id: "cp2", name: "Computer Programming 2", short: "Programming 2", code: "CS210", credits: 8,
+    materials: drive("1zyEEZoXpfAHR75xyUssTlTul1CW5tNt7"),
+    syllabus: syllabus(3212),
     finalWeight: 40,
     parts: [
       { key: "midterm", label: "Midterm", weight: 30 },
@@ -28,6 +36,8 @@ export const COURSES = [
   },
   {
     id: "ce", name: "Circular Economy", short: "Circular Economy", code: "ECON330", credits: 6,
+    materials: drive("1knMjdgeGYAbkTGpV0dtYQCMCtP8GMV-4"),
+    syllabus: syllabus(3214),
     finalWeight: 40,
     parts: [
       { key: "participation", label: "Tutorial participation", weight: 11 },
@@ -38,6 +48,8 @@ export const COURSES = [
   },
   {
     id: "mgt", name: "Principles of Management", short: "Management", code: "MGT101", credits: 6,
+    materials: drive("1GDybvJd5SoYx5lTdHTmwTw-NjenIIsrg"),
+    syllabus: syllabus(3215),
     finalWeight: 40,
     parts: [
       { key: "midterm", label: "Midterm", weight: 30 },
@@ -47,6 +59,8 @@ export const COURSES = [
   },
   {
     id: "em", name: "Econometrics", short: "Econometrics", code: "ECON301", credits: 6,
+    materials: drive("1i5mkQsQSFFEnzB_k7wxWlP-d6mTyhYfa"),
+    syllabus: syllabus(3216),
     finalWeight: 60,
     parts: [{ key: "midterm", label: "Midterm", weight: 40 }],
   },

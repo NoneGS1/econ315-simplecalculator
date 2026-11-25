@@ -88,6 +88,9 @@
   .muted { color: var(--hint); }
   .ok { color: var(--good); }
   .note { color: var(--hint); font-size: 12px; margin: 8px 2px 0; }
+  .links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .link { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 8px; border-radius: 10px;
+    background: var(--soft); color: var(--accent); font-weight: 600; font-size: 14px; text-decoration: none; }
   .foot { text-align: center; color: var(--hint); font-size: 12px; margin-top: 4px; }
 
   .course { display: flex; align-items: center; gap: 12px; padding: 10px 0; cursor: pointer; }
@@ -141,6 +144,20 @@
   const totalOf = (c, f = state.courses[c.id].final) => courseTotal(c, state.courses[c.id].values, f, state.ungraded);
   const needCell = (n) => n === null ? '<span class="muted">out of reach</span>' : n === 0 ? '<span class="ok">any score</span>' : fmt(n);
   const badge = (letter, cls = "") => `<div class="badge ${cls} ${letter === "F" ? "f" : ""}">${letter}</div>`;
+
+  // Links: t.me links stay inside Telegram, others open in the browser.
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-link]");
+    if (!a) return;
+    e.preventDefault();
+    const url = a.href;
+    if (tg && tg.platform !== "unknown") {
+      if (url.startsWith("https://t.me/")) tg.openTelegramLink(url);
+      else tg.openLink(url);
+    } else {
+      window.open(url, "_blank", "noopener");
+    }
+  });
 
   // ---- tabs ---------------------------------------------------------------
   function renderTabs() {
@@ -221,6 +238,13 @@
     }).join("");
 
     $("#view").innerHTML = `
+      <section class="card">
+        <h2>Materials</h2>
+        <div class="links">
+          <a class="link" href="${c.materials}" data-link>📁 Course materials</a>
+          <a class="link" href="${c.syllabus}" data-link>📄 Syllabus</a>
+        </div>
+      </section>
       <section class="card">
         <h2>${c.name} <span>${c.code} · ${c.credits} cr</span></h2>
         ${fields}
