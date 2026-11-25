@@ -3,7 +3,7 @@
 
 import { InputError, compute, fmt, letterFor, parseNumbers, requiredFinal } from "../public/calc.js";
 import { COURSES } from "../public/courses.js";
-import { deadlineCommand } from "./deadlines.js";
+import { deadlineCommand, isAdmin } from "./deadlines.js";
 import { NEED_USAGE, SCORE_USAGE, esc, helpMessage, needReply, parseNeed, scoreReply, startMessage } from "./messages.js";
 
 export class TelegramError extends Error {}
@@ -12,7 +12,7 @@ export class TelegramError extends Error {}
 export const COMMANDS = [
   { command: "score", description: "Your grade: /score midterm final [bonus]" },
   { command: "need", description: "Final needed: /need [grade] midterm [bonus]" },
-  { command: "calc", description: "Open the grade calculator app" },
+  { command: "app", description: "Open the class app: grades, GPA, materials" },
   { command: "materials", description: "Course materials and syllabuses" },
   { command: "deadlines", description: "Upcoming deadlines" },
   { command: "help", description: "How to use the bot" },
@@ -22,6 +22,7 @@ export const COMMANDS = [
 export const ADMIN_COMMANDS = [
   { command: "deadline", description: "Add a deadline: /deadline 05.12 23:59 Title", public: true },
   { command: "deadline_delete", description: "Remove a deadline: /deadline_delete id" },
+  { command: "pin_app", description: "Post and pin an 'Open app' button in this topic", public: true },
 ];
 
 const HTML = { parse_mode: "HTML", link_preview_options: { is_disabled: true } };
@@ -66,7 +67,7 @@ export async function registerCommands(api) {
 
 // Mini app: menu button in private chats with the bot.
 export async function registerMenuButton(api, appUrl) {
-  await api("setChatMenuButton", { menu_button: { type: "web_app", text: "Calculator", web_app: { url: appUrl } } });
+  await api("setChatMenuButton", { menu_button: { type: "web_app", text: "App", web_app: { url: appUrl } } });
 }
 
 // opts: { store, tz, appUrl, now } — store and tz are needed for deadlines.
@@ -118,17 +119,38 @@ export function materialsReply() {
   };
 }
 
-function calcReply(msg, username, appUrl) {
-  // web_app buttons only work in private chats; in groups, link to the bot's
-  // main mini app instead (set up once in @BotFather).
-  const button =
-    msg.chat.type === "private" && appUrl
-      ? { text: "🧮 Open calculator", web_app: { url: appUrl } }
-      : { text: "🧮 Open calculator", url: `https://t.me/${username}?startapp` };
-  return {
-    text: "🧮 <b>Grade calculator</b>\nDrag the sliders to see your grade and what you need on the final. Nothing you enter leaves your phone.",
-    markup: { inline_keyboard: [[button]] },
-  };
+const APP_TEXT =
+  "📱 <b>Class app</b>\nGrades and the final you need for every course, your GPA, and course materials. " +
+  "Nothing you enter leaves your phone.";
+
+// web_app buttons only work in private chats; in groups, link to the bot's
+// main mini app instead (set up once in @BotFather).
+const appButton = (msg, username, appUrl) =>
+  msg.chat.type === "private" && appUrl
+    ? { text: "📱 Open app", web_app: { url: appUrl } }
+    : { text: "📱 Open app", url: `https://t.me/${username}?startapp` };
+
+function appReply(msg, username, appUrl) {
+  return { text: APP_TEXT, markup: { inline_keyboard: [[appButton(msg, username, appUrl)]] } };
+}
+
+// Admins: post a public "Open app" message in this topic and pin it, as a
+// stand-in for a menu button (Telegram only offers that in private chats).
+async function pinApp(api, username, msg) {
+  if (msg.chat.type === "private") return { text: "Use /pin_app in the group, in the topic where the button should be pinned." };
+  if (!(await isAdmin(api, msg))) return { text: "Only group admins can pin the app button." };
+  const posted = await api("sendMessage", {
+    chat_id: msg.chat.id,
+    ...topicOf(msg),
+    text: APP_TEXT,
+    ...HTML,
+    reply_markup: { inline_keyboard: [[appButton(msg, username)]] },
+  });
+  await tryCall(api, "deleteMessage", { chat_id: msg.chat.id, message_id: msg.message_id });
+  const pinned = await tryCall(api, "pinChatMessage", {
+    chat_id: msg.chat.id, message_id: posted.message_id, disable_notification: true,
+  });
+  return pinned ? null : { text: "Posted, but I couldn't pin it. Give me the \"Pin messages\" admin right and try again." };
 }
 
 async function onCommand(api, username, msg, opts) {
@@ -143,8 +165,11 @@ async function onCommand(api, username, msg, opts) {
     if (!out) return;
     if (out.public) return api("sendMessage", { chat_id: msg.chat.id, ...topicOf(msg), text: out.public, ...HTML });
     reply = { text: out.private };
-  } else if (cmd === "calc") {
-    reply = calcReply(msg, username, opts.appUrl);
+  } else if (cmd === "app" || cmd === "calc") { // /calc: old name, still works
+    reply = appReply(msg, username, opts.appUrl);
+  } else if (cmd === "pin_app") {
+    reply = await pinApp(api, username, msg);
+    if (!reply) return;
   } else if (cmd === "materials") {
     reply = materialsReply();
   } else {

@@ -110,9 +110,9 @@ test("non-admins can't add deadlines", async () => {
   assert.equal(store.upcoming(-100, NOW).length, 0);
 });
 
-test("/calc links to the mini app", async () => {
+test("/app (and old /calc) link to the mini app", async () => {
   const { api, calls } = fakeApi();
-  await handleUpdate(api, "Econ315Bot", { message: forumMsg("/calc", { ephemeral_message_id: 3 }) }, { appUrl: "https://x/app/" });
+  await handleUpdate(api, "Econ315Bot", { message: forumMsg("/app", { ephemeral_message_id: 3 }) }, { appUrl: "https://x/app/" });
   assert.equal(calls.at(-1)[1].reply_markup.inline_keyboard[0][0].url, "https://t.me/Econ315Bot?startapp");
   await handleUpdate(api, "Econ315Bot", { message: { ...forumMsg("/calc"), chat: { id: 42, type: "private" } } }, { appUrl: "https://x/app/" });
   assert.equal(calls.at(-1)[1].reply_markup.inline_keyboard[0][0].web_app.url, "https://x/app/");
@@ -135,4 +135,19 @@ test("/materials: a Drive and a syllabus button per course, answered privately",
   assert.ok(rows.some((r) => r.length === 2 && r.every((b) => b.text.startsWith("📊 GT bonus"))));
   assert.ok(rows.flat().every((b) => b.url && !/ouid=|authuser=/.test(b.url)));
   assert.equal(new Set(courseRows.map(([d]) => d.url)).size, 5); // no two courses share a folder
+});
+
+test("/pin_app: admins post and pin an Open app button in the topic", async () => {
+  const { api, calls } = fakeApi();
+  await handleUpdate(api, "Econ315Bot", { message: forumMsg("/pin_app") }, {});
+  const post = calls.find(([m, p]) => m === "sendMessage" && p.reply_markup)[1];
+  assert.equal(post.message_thread_id, 77);
+  assert.equal(post.ephemeral_message_parameters, undefined); // visible to everyone
+  assert.equal(post.reply_markup.inline_keyboard[0][0].url, "https://t.me/Econ315Bot?startapp");
+  assert.ok(calls.some(([m, p]) => m === "pinChatMessage" && p.message_id === 99));
+
+  const member = fakeApi("member");
+  await handleUpdate(member.api, "Econ315Bot", { message: forumMsg("/pin_app") }, {});
+  assert.ok(!member.calls.some(([m]) => m === "pinChatMessage"));
+  assert.match(member.calls.filter(([m]) => m === "sendMessage").at(-1)[1].text, /Only group admins/);
 });
