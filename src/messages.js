@@ -135,12 +135,13 @@ export const helpMessage = () =>
     "<code>/need A 70 20</code> — for an A",
     "<code>/need 70 20</code> — for every grade",
     "",
-    "<b>/calc</b> — grade calculator for all courses",
+    "<b>/app</b> — class app: grades, GPA and materials for all courses",
     "<b>/materials</b> — course materials and syllabuses",
     "<b>/deadlines</b> — upcoming deadlines",
     "",
     "In the group, only you see my answers.",
     "",
     "<i>Admins: /deadline 05.12 23:59 Title adds a deadline in the current topic; " +
-      "I remind the topic 3 days, 1 day and 3 hours before. /deadline_delete id removes one.</i>",
+      "I remind the topic 3 days, 1 day and 3 hours before. /deadline_delete id removes one. " +
+      "/pin_app pins an Open app button in the current topic.</i>",
   ].join("\n");

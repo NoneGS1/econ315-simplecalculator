@@ -6,6 +6,7 @@ Newest first. Each entry links to its pull request.
 ## 2026-11-25
 
 ### Added
+- **`/pin_app`** (admins): posts an "Open app" button in the current topic and pins it. This is the quickest way into the app from the group, because Telegram only offers bots a menu button in private chats ([#11](https://github.com/NoneGS1/econ315-simplecalculator/pull/11)).
 - **Professors' official links** for each course ([#9](https://github.com/NoneGS1/econ315-simplecalculator/pull/9)):
   - Game Theory: the professor's course page, plus the bonus-points sheets for the 13:30–15:30 and 15:30–17:30 tutorials.
   - Programming 2, Circular Economy and Econometrics: the professor's Telegram channel.
@@ -16,6 +17,9 @@ Newest first. Each entry links to its pull request.
   - The Overview tab shows each course's predicted grade, the final needed for an A and an A+, and a credit-weighted GPA.
   - A switch sets whether ungraded items count as 100 or 0.
   - Everything is calculated and saved only on your own device.
+
+### Changed
+- `/calc` is now **`/app`**, since the app also has course materials. `/calc` still works. The menu button in private chats is now called **App** ([#11](https://github.com/NoneGS1/econ315-simplecalculator/pull/11)).
 
 ### Removed
 - Tracking parameters (`authuser`, `ouid`) from the shared links ([#9](https://github.com/NoneGS1/econ315-simplecalculator/pull/9)).

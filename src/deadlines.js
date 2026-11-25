@@ -6,7 +6,7 @@ import { DEADLINE_USAGE, formatDate, parseDeadline, timeLeft } from "./time.js";
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const tzName = (tz) => tz.split("/").pop().replace(/_/g, " ");
 
-async function isAdmin(api, msg) {
+export async function isAdmin(api, msg) {
   if (msg.sender_chat && msg.sender_chat.id === msg.chat.id) return true; // anonymous admin
   try {
     const m = await api("getChatMember", { chat_id: msg.chat.id, user_id: msg.from.id });
