@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Grade Calculator</title>
+<title>Class App</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
@@ -96,6 +96,17 @@
   .olink:first-of-type { border-top: 0; }
   .olink .t { flex: 1; }
   .olink .arrow { color: var(--hint); font-size: 18px; }
+  .deadline { display: flex; align-items: center; gap: 12px; padding: 10px 0; color: var(--text); text-decoration: none; border-top: 1px solid var(--line); }
+  .deadline:first-of-type { border-top: 0; }
+  .deadline .when { flex: none; min-width: 64px; text-align: center; padding: 5px 8px; border-radius: 8px;
+    background: var(--track); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .deadline .when.near { background: color-mix(in srgb, #f5a524 22%, transparent); color: #c27c00; }
+  .deadline .when.soon { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
+  .deadline .what { flex: 1; min-width: 0; display: grid; }
+  .deadline .what b { font-weight: 600; overflow-wrap: anywhere; }
+  .deadline small { color: var(--hint); font-size: 13px; }
+  .deadline .arrow, .olink .arrow { color: var(--hint); font-size: 18px; }
+  .card h2 a { color: var(--accent); text-decoration: none; font-weight: 500; }
   .foot { text-align: center; color: var(--hint); font-size: 12px; margin-top: 4px; }
 
   .course { display: flex; align-items: center; gap: 12px; padding: 10px 0; cursor: pointer; }
@@ -109,11 +120,11 @@
 </head>
 <body>
 <main>
-  <h1>Grade calculator</h1>
+  <h1>Class app</h1>
   <p class="sub">Economics &amp; Data Science · Class of 2028 · Fall 2026</p>
   <nav class="tabs" id="tabs" role="tablist" aria-label="Courses"></nav>
   <div id="view"></div>
-  <p class="foot">Saved only on this device. Nothing you enter is sent anywhere.</p>
+  <p class="foot">Your scores are saved only on this device and never sent anywhere.</p>
 </main>
 
 <script type="module">
@@ -140,7 +151,7 @@
     }
   } catch {}
   for (const c of COURSES) state.courses[c.id] ??= blank();
-  if (state.tab !== "overview" && !COURSES.some((c) => c.id === state.tab)) state.tab = "overview";
+  if (!["overview", "deadlines"].includes(state.tab) && !COURSES.some((c) => c.id === state.tab)) state.tab = "overview";
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -166,7 +177,7 @@
 
   // ---- tabs ---------------------------------------------------------------
   function renderTabs() {
-    const tabs = [{ id: "overview", short: "Overview" }, ...COURSES];
+    const tabs = [{ id: "overview", short: "Overview" }, { id: "deadlines", short: "Deadlines" }, ...COURSES];
     $("#tabs").innerHTML = tabs.map((t) =>
       `<button class="tab" role="tab" data-tab="${t.id}" aria-selected="${state.tab === t.id}">${t.short}</button>`).join("");
   }
@@ -219,12 +230,59 @@
           : `From ${counted.length} of ${COURSES.length} courses · ${counted.reduce((s, c) => s + c.credits, 0)} credits`}</div>
         <div class="row">Uses each course's expected final</div>
       </section>
+      <section class="card" id="next-deadlines" hidden></section>
       <section class="card">
         <h2>Courses <span>Final needed for</span></h2>
         ${rows}
       </section>
       <p class="note">Tap a course to enter scores and your expected final. Ungraded items count as ${state.ungraded}; you can change this inside any course.</p>`;
     for (const el of document.querySelectorAll("[data-go]")) el.addEventListener("click", () => go(el.dataset.go));
+    loadDeadlines().then((r) => {
+      const box = $("#next-deadlines");
+      if (!box || state.tab !== "overview" || r.error || !r.deadlines.length) return;
+      box.hidden = false;
+      box.innerHTML = `<h2>Next deadlines <span><a href="#" id="all-deadlines">See all ›</a></span></h2>
+        ${r.deadlines.slice(0, 3).map((d) => deadlineRow(d, r.tz)).join("")}`;
+      $("#all-deadlines").addEventListener("click", (e) => { e.preventDefault(); go("deadlines"); });
+    });
+  }
+
+  // ---- deadlines (from the bot; needs Telegram's signed init data) -------------
+  let deadlinesPromise;
+  function loadDeadlines() {
+    if (!tg?.initData) return Promise.resolve({ error: "Open the app from Telegram to see deadlines." });
+    deadlinesPromise ??= fetch("/api/deadlines", { headers: { "X-Telegram-Init-Data": tg.initData } })
+      .then(async (res) => (res.ok ? res.json() : { error: (await res.json().catch(() => ({}))).error || "Couldn't load deadlines." }))
+      .catch(() => ({ error: "Couldn't load deadlines. Check your connection." }));
+    return deadlinesPromise;
+  }
+
+  const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+  function deadlineRow(d, tz) {
+    const when = new Intl.DateTimeFormat("en-GB", { timeZone: tz, weekday: "short", day: "numeric", month: "short",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(d.due));
+    const mins = Math.max(0, Math.round((d.due - Date.now()) / 60000));
+    const days = Math.floor(mins / 1440), hours = Math.floor((mins % 1440) / 60);
+    const left = days ? `${days}d ${hours}h` : hours ? `${hours}h ${mins % 60}m` : `${mins}m`;
+    const urgency = mins < 1440 ? "soon" : mins < 3 * 1440 ? "near" : "";
+    return `<a class="deadline" href="${esc(d.link)}" data-link>
+      <span class="when ${urgency}">${left}</span>
+      <span class="what"><b>${esc(d.title)}</b><small>${when}</small></span>
+      <span class="arrow">›</span></a>`;
+  }
+
+  function renderDeadlines() {
+    $("#view").innerHTML = `<section class="card"><h2>Upcoming deadlines</h2><div id="dl-list" class="muted">Loading…</div></section>
+      <p class="note">Admins add deadlines with /deadline in the group, and the bot reminds the topic 3 days, 1 day and 3 hours before. Tap one to open its topic.</p>`;
+    loadDeadlines().then((r) => {
+      const list = $("#dl-list");
+      if (!list) return;
+      if (r.error) { list.textContent = r.error; return; }
+      list.classList.remove("muted");
+      list.innerHTML = r.deadlines.length
+        ? r.deadlines.map((d) => deadlineRow(d, r.tz)).join("") + `<p class="note">Times are ${esc(r.tz.split("/").pop().replace(/_/g, " "))} time.</p>`
+        : '<p class="muted">No upcoming deadlines. 🎉</p>';
+    });
   }
 
   // ---- one course -------------------------------------------------------------
@@ -324,7 +382,9 @@
   function render() {
     lastLetter = undefined;
     const c = COURSES.find((x) => x.id === state.tab);
-    c ? renderCourse(c) : renderOverview();
+    if (c) renderCourse(c);
+    else if (state.tab === "deadlines") renderDeadlines();
+    else renderOverview();
   }
 
   renderTabs();

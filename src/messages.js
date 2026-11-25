@@ -124,24 +124,15 @@ export const startMessage = () =>
 
 export const helpMessage = () =>
   [
-    "🧮 <b>Commands</b>",
+    "📱 <b>/app</b> opens the class app:",
+    "• your grade and the final you need, for every course",
+    "• predicted GPA",
+    "• course materials, syllabuses and professors' channels",
+    "• upcoming deadlines",
     "",
-    "<b>/score</b> midterm final [bonus]",
-    "Your 30% part, course total and letter grade.",
-    "<code>/score 72 85 10</code>",
+    "Shortcuts in chat: <code>/score 72 85 10</code> · <code>/need A 70 20</code> · /materials · /deadlines",
     "",
-    "<b>/need</b> [grade] midterm [bonus]",
-    "Final exam score you need for a grade.",
-    "<code>/need A 70 20</code> — for an A",
-    "<code>/need 70 20</code> — for every grade",
-    "",
-    "<b>/app</b> — class app: grades, GPA and materials for all courses",
-    "<b>/materials</b> — course materials and syllabuses",
-    "<b>/deadlines</b> — upcoming deadlines",
-    "",
-    "In the group, only you see my answers.",
-    "",
-    "<i>Admins: /deadline 05.12 23:59 Title adds a deadline in the current topic; " +
-      "I remind the topic 3 days, 1 day and 3 hours before. /deadline_delete id removes one. " +
+    "<i>Admins: /deadline 05.12 23:59 Title adds a deadline in the current topic, with reminders " +
+      "3 days, 1 day and 3 hours before. /deadline_delete id removes one. " +
       "/pin_app pins an Open app button in the current topic.</i>",
   ].join("\n");

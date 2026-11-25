@@ -47,6 +47,11 @@ export class DeadlineStore {
     return this.rows("SELECT * FROM deadlines WHERE chat_id = ? AND due > ? ORDER BY due", chatId, now);
   }
 
+  // Every group's upcoming deadlines (the mini app filters by membership).
+  allUpcoming(now = Date.now(), limit = 100) {
+    return this.rows("SELECT * FROM deadlines WHERE due > ? ORDER BY due LIMIT ?", now, limit);
+  }
+
   remove(chatId, id) {
     return this.rows("DELETE FROM deadlines WHERE chat_id = ? AND id = ? RETURNING id, title", chatId, id)[0] ?? null;
   }

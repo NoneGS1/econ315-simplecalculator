@@ -6,6 +6,7 @@ Newest first. Each entry links to its pull request.
 ## 2026-11-25
 
 ### Added
+- **Deadlines in the app** ([#12](https://github.com/NoneGS1/econ315-simplecalculator/pull/12)): a Deadlines tab, plus the next three on the Overview. Deadlines due within 1 day are marked red and within 3 days amber. Tap one to open its topic. The app proves who you are with Telegram's signed login data, and only shows deadlines from groups you're in.
 - **`/pin_app`** (admins): posts an "Open app" button in the current topic and pins it. This is the quickest way into the app from the group, because Telegram only offers bots a menu button in private chats ([#11](https://github.com/NoneGS1/econ315-simplecalculator/pull/11)).
 - **Professors' official links** for each course ([#9](https://github.com/NoneGS1/econ315-simplecalculator/pull/9)):
   - Game Theory: the professor's course page, plus the bonus-points sheets for the 13:30–15:30 and 15:30–17:30 tutorials.
@@ -19,6 +20,8 @@ Newest first. Each entry links to its pull request.
   - Everything is calculated and saved only on your own device.
 
 ### Changed
+- The `/` menu now shows just **`/app`** and **`/help`**, since the app covers everything ([#12](https://github.com/NoneGS1/econ315-simplecalculator/pull/12)). `/score`, `/need`, `/materials` and `/deadlines` still work as shortcuts and are listed in `/help`. Admins also see `/deadline`, `/deadline_delete` and `/pin_app`.
+- The app is now called **Class app** ([#12](https://github.com/NoneGS1/econ315-simplecalculator/pull/12)).
 - `/calc` is now **`/app`**, since the app also has course materials. `/calc` still works. The menu button in private chats is now called **App** ([#11](https://github.com/NoneGS1/econ315-simplecalculator/pull/11)).
 
 ### Removed
