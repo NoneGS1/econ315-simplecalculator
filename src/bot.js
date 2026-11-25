@@ -95,16 +95,26 @@ function replyFor(cmd, args) {
   return null;
 }
 
-// One row per course: Drive folder + syllabus post.
+// One row per course (Drive, syllabus, the professor's main link), plus a
+// second row for any extra links (e.g. Game Theory's bonus sheets).
 export function materialsReply() {
+  const rows = [];
+  for (const c of COURSES) {
+    const links = c.links ?? [];
+    rows.push([
+      { text: `📁 ${c.short}`, url: c.materials },
+      { text: "📄 Syllabus", url: c.syllabus },
+      ...links.filter((l) => !l.row).map((l) => ({ text: `${l.icon} ${l.short}`, url: l.url })),
+    ]);
+    const extra = links.filter((l) => l.row);
+    if (extra.length) rows.push(extra.map((l) => ({ text: `${l.icon} ${l.short}`, url: l.url })));
+  }
   return {
-    text: "📚 <b>Course materials</b>\nDrive folders with lecture files, and the syllabus for each course.",
-    markup: {
-      inline_keyboard: COURSES.map((c) => [
-        { text: `📁 ${c.short}`, url: c.materials },
-        { text: "📄 Syllabus", url: c.syllabus },
-      ]),
-    },
+    text:
+      "📚 <b>Course materials</b>\n" +
+      "📁 class Drive (Management: the professor's Drive) · 📄 syllabus\n" +
+      "📢 professor's channel · 🌐 professor's site · 📊 bonus / participation sheets",
+    markup: { inline_keyboard: rows },
   };
 }
 

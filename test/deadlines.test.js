@@ -125,10 +125,14 @@ test("/materials: a Drive and a syllabus button per course, answered privately",
   assert.deepEqual(p.ephemeral_message_parameters, { receiver_user_id: 42 });
   assert.equal(p.message_thread_id, 77);
   const rows = p.reply_markup.inline_keyboard;
-  assert.equal(rows.length, 5);
-  for (const [drive, syl] of rows) {
+  const courseRows = rows.filter((r) => r[0].text.startsWith("📁"));
+  assert.equal(courseRows.length, 5);
+  for (const [drive, syl] of courseRows) {
     assert.match(drive.url, /^https:\/\/drive\.google\.com\/drive\/folders\//);
     assert.match(syl.url, /^https:\/\/t\.me\/c\/3803621408\/5\/\d+$/);
   }
-  assert.equal(new Set(rows.map(([d]) => d.url)).size, 5); // no two courses share a folder
+  // Game Theory's bonus sheets get their own row
+  assert.ok(rows.some((r) => r.length === 2 && r.every((b) => b.text.startsWith("📊 GT bonus"))));
+  assert.ok(rows.flat().every((b) => b.url && !/ouid=|authuser=/.test(b.url)));
+  assert.equal(new Set(courseRows.map(([d]) => d.url)).size, 5); // no two courses share a folder
 });

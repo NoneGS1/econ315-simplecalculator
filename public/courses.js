@@ -4,6 +4,7 @@
 import { GRADES, letterFor } from "./calc.js";
 
 const drive = (id) => `https://drive.google.com/drive/folders/${id}?usp=sharing`;
+const sheet = (id) => `https://docs.google.com/spreadsheets/d/${id}/edit?usp=sharing`;
 // Syllabus posts in the class group (open for group members only).
 const syllabus = (msg) => `https://t.me/c/3803621408/5/${msg}`;
 
@@ -14,6 +15,12 @@ export const COURSES = [
     id: "gt", name: "Game Theory for Economics", short: "Game Theory", code: "ECON315", credits: 6,
     materials: drive("17Q16zR2QNTsDfUTSy3A7qEzvnLQZ9l_Y"),
     syllabus: syllabus(3213),
+    // Official links from the professor.
+    links: [
+      { icon: "🌐", label: "Professor's course page", short: "Prof site", url: "https://sites.google.com/site/econxyliao/home/teaching/fall-2026" },
+      { icon: "📊", label: "Bonus points · tutorial 13:30–15:30", short: "GT bonus · 13:30", url: sheet("1S5bDhdXzqASEoixqwiK7dwXLz63gkXPqWuYTE0UgwF8"), row: 2 },
+      { icon: "📊", label: "Bonus points · tutorial 15:30–17:30", short: "GT bonus · 15:30", url: sheet("1xBoo5Jay5qcYlmC3qdR3EJG9fh78rfs4rN-8b-PvFJs"), row: 2 },
+    ],
     finalWeight: 40,
     parts: [
       { key: "midterm", label: "Midterm", weight: 30 },
@@ -27,6 +34,7 @@ export const COURSES = [
     id: "cp2", name: "Computer Programming 2", short: "Programming 2", code: "CS210", credits: 8,
     materials: drive("1zyEEZoXpfAHR75xyUssTlTul1CW5tNt7"),
     syllabus: syllabus(3212),
+    links: [{ icon: "📢", label: "Professor's channel · @nuu_cs210", short: "Channel", url: "https://t.me/nuu_cs210" }],
     finalWeight: 40,
     parts: [
       { key: "midterm", label: "Midterm", weight: 30 },
@@ -38,6 +46,7 @@ export const COURSES = [
     id: "ce", name: "Circular Economy", short: "Circular Economy", code: "ECON330", credits: 6,
     materials: drive("1knMjdgeGYAbkTGpV0dtYQCMCtP8GMV-4"),
     syllabus: syllabus(3214),
+    links: [{ icon: "📢", label: "Professor's channel · @circular_economyjed", short: "Channel", url: "https://t.me/circular_economyjed" }],
     finalWeight: 40,
     parts: [
       { key: "participation", label: "Tutorial participation", weight: 11 },
@@ -50,6 +59,8 @@ export const COURSES = [
     id: "mgt", name: "Principles of Management", short: "Management", code: "MGT101", credits: 6,
     materials: drive("1GDybvJd5SoYx5lTdHTmwTw-NjenIIsrg"),
     syllabus: syllabus(3215),
+    materialsByProfessor: true, // the professor's own Drive; no other channel
+    links: [{ icon: "📊", label: "Class participation", short: "Participation", url: sheet("1Z-4EWyiG6Wpds_BU5Y5lbUE3Sns6wrRkvncaaE9Pv7c") }],
     finalWeight: 40,
     parts: [
       { key: "midterm", label: "Midterm", weight: 30 },
@@ -61,6 +72,7 @@ export const COURSES = [
     id: "em", name: "Econometrics", short: "Econometrics", code: "ECON301", credits: 6,
     materials: drive("1i5mkQsQSFFEnzB_k7wxWlP-d6mTyhYfa"),
     syllabus: syllabus(3216),
+    links: [{ icon: "📢", label: "Professor's channel · @newuu_econometrics", short: "Channel", url: "https://t.me/newuu_econometrics" }],
     finalWeight: 60,
     parts: [{ key: "midterm", label: "Midterm", weight: 40 }],
   },
