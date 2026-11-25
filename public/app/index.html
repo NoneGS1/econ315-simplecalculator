@@ -15,6 +15,7 @@
     --accent-text: var(--tg-theme-button-text-color, #ffffff);
     --line: color-mix(in srgb, var(--hint) 22%, transparent);
     --track: color-mix(in srgb, var(--hint) 25%, transparent);
+    --soft: color-mix(in srgb, var(--accent) 12%, transparent);
     --good: #2fb36b;
     --bad: #e5484d;
   }
@@ -26,25 +27,47 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
     font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 520px; margin: 0 auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); }
+  main { max-width: 560px; margin: 0 auto; padding: 12px 16px calc(24px + env(safe-area-inset-bottom)); }
   h1 { font-size: 20px; margin: 4px 4px 2px; }
-  .sub { color: var(--hint); margin: 0 4px 14px; font-size: 13px; }
+  .sub { color: var(--hint); margin: 0 4px 12px; font-size: 13px; }
+
+  .tabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 -16px 12px; padding: 2px 16px 4px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: none; border: 0; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; font-weight: 500;
+    background: var(--card); color: var(--text); cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--accent); color: var(--accent-text); }
+
   .card { background: var(--card); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
   .card h2 { font-size: 13px; font-weight: 600; color: var(--hint); text-transform: uppercase;
-    letter-spacing: .04em; margin: 0 0 10px; }
+    letter-spacing: .04em; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: baseline; }
+  .card h2 span { text-transform: none; letter-spacing: 0; font-weight: 400; }
 
-  .field { padding: 8px 0; }
+  .field { padding: 9px 0; }
   .field + .field { border-top: 1px solid var(--line); }
-  .field label { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-weight: 500; }
-  .field small { color: var(--hint); font-weight: 400; }
-  .num { width: 76px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line);
+  .field-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .field-head label { font-weight: 500; }
+  .w { color: var(--hint); font-size: 12px; font-weight: 400; margin-left: 6px; }
+  .num { width: 72px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line);
     background: transparent; color: var(--text); font: inherit; font-weight: 600; text-align: right; }
+  .num::placeholder { color: var(--hint); font-weight: 400; }
+  .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; margin-top: 8px; }
+  .items label { display: grid; gap: 3px; font-size: 12px; color: var(--hint); }
+  .items .num { width: 100%; }
   input[type=range] { width: 100%; margin: 10px 0 2px; accent-color: var(--accent); height: 28px; }
+
+  .seg { display: inline-flex; background: var(--track); border-radius: 8px; padding: 2px; }
+  .seg button { border: 0; background: transparent; color: var(--text); font: inherit; font-size: 13px;
+    padding: 4px 12px; border-radius: 6px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--card); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+  .setting { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; font-size: 13px; color: var(--hint); }
 
   .result { display: flex; align-items: center; gap: 16px; }
   .badge { flex: none; width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center;
-    background: var(--accent); color: var(--accent-text); font-size: 30px; font-weight: 700; transition: background .2s; }
+    background: var(--accent); color: var(--accent-text); font-size: 30px; font-weight: 700; }
   .badge.f { background: var(--bad); }
+  .badge.empty { background: var(--track); color: var(--hint); }
+  .badge.sm { width: 44px; height: 44px; border-radius: 12px; font-size: 18px; }
   .stats { flex: 1; min-width: 0; }
   .big { font-size: 26px; font-weight: 700; }
   .big span { font-size: 15px; color: var(--hint); font-weight: 500; }
@@ -52,7 +75,7 @@
   .row b { color: var(--text); }
 
   .bar { position: relative; height: 10px; border-radius: 5px; background: var(--track); margin: 16px 0 22px; }
-  .bar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--accent); transition: width .15s; }
+  .bar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--accent); }
   .bar .tick { position: absolute; top: -3px; width: 2px; height: 16px; background: var(--card); }
   .bar .tick i { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-style: normal;
     font-size: 10px; color: var(--hint); white-space: nowrap; }
@@ -64,131 +87,215 @@
   tr.current td { color: var(--accent); font-weight: 700; }
   .muted { color: var(--hint); }
   .ok { color: var(--good); }
-  details { margin-top: 4px; }
-  summary { cursor: pointer; color: var(--accent); font-size: 14px; }
-  .formula { color: var(--hint); font-size: 13px; margin-top: 8px; }
-  .note { text-align: center; color: var(--hint); font-size: 12px; margin-top: 4px; }
+  .note { color: var(--hint); font-size: 12px; margin: 8px 2px 0; }
+  .foot { text-align: center; color: var(--hint); font-size: 12px; margin-top: 4px; }
+
+  .course { display: flex; align-items: center; gap: 12px; padding: 10px 0; cursor: pointer; }
+  .course + .course { border-top: 1px solid var(--line); }
+  .course .info { flex: 1; min-width: 0; }
+  .course .name { font-weight: 600; }
+  .course .meta { color: var(--hint); font-size: 13px; }
+  .course .needs { text-align: right; font-size: 13px; color: var(--hint); font-variant-numeric: tabular-nums; }
+  .course .needs b { color: var(--text); }
 </style>
 </head>
 <body>
 <main>
   <h1>Grade calculator</h1>
-  <p class="sub">ECON315 · Game Theory · Economics &amp; Data Science, Class of 2028</p>
-
-  <section class="card" aria-label="Your scores">
-    <div class="field">
-      <label for="midterm-n">Midterm <small>out of 100</small><input class="num" id="midterm-n" type="number" inputmode="decimal" min="0" max="100" step="0.5"></label>
-      <input id="midterm" type="range" min="0" max="100" step="0.5" aria-label="Midterm">
-    </div>
-    <div class="field">
-      <label for="final-n">Final <small>out of 100</small><input class="num" id="final-n" type="number" inputmode="decimal" min="0" max="100" step="0.5"></label>
-      <input id="final" type="range" min="0" max="100" step="0.5" aria-label="Final">
-    </div>
-    <div class="field">
-      <label for="bonus-n">Bonus <small>% (10 = ×1.10)</small><input class="num" id="bonus-n" type="number" inputmode="decimal" min="0" max="100" step="1"></label>
-      <input id="bonus" type="range" min="0" max="50" step="1" aria-label="Bonus">
-    </div>
-  </section>
-
-  <section class="card" aria-live="polite">
-    <div class="result">
-      <div class="badge" id="badge">B+</div>
-      <div class="stats">
-        <div class="big" id="total">0 <span>/ 100</span></div>
-        <div class="row">30% part <b id="part">0 / 30</b></div>
-        <div class="row">Grade points <b id="points">0</b></div>
-      </div>
-    </div>
-    <div class="bar" id="bar"><div class="fill" id="fill"></div></div>
-    <details>
-      <summary>How it's calculated</summary>
-      <div class="formula" id="formula"></div>
-    </details>
-  </section>
-
-  <section class="card">
-    <h2>Final exam needed</h2>
-    <table>
-      <thead><tr><th>Grade</th><th>Total</th><th>Final needed</th></tr></thead>
-      <tbody id="needs"></tbody>
-    </table>
-  </section>
-
-  <p class="note">Calculated on your device. Nothing you enter is sent anywhere.</p>
+  <p class="sub">Economics &amp; Data Science · Class of 2028 · Fall 2026</p>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Courses"></nav>
+  <div id="view"></div>
+  <p class="foot">Saved only on this device. Nothing you enter is sent anywhere.</p>
 </main>
 
 <script type="module">
-  import { GRADES, compute, fmt, letterFor, requiredFinal } from "/calc.js";
+  import { fmt } from "/calc.js";
+  import { COURSES, GRADES, courseTotal, finalNeeded, gpa, letterFor } from "/courses.js";
 
   const tg = window.Telegram?.WebApp;
-  if (tg?.initData !== undefined && tg.platform !== "unknown") {
+  if (tg && tg.platform !== "unknown") {
     document.documentElement.dataset.tg = "";
     tg.ready();
     tg.expand();
   }
 
-  const $ = (id) => document.getElementById(id);
-  const fields = ["midterm", "final", "bonus"];
-  const defaults = { midterm: 70, final: 75, bonus: 0 };
+  // ---- state (kept in this browser only) ----------------------------------
+  const KEY = "grades-v2";
+  const blank = () => ({ values: {}, final: 70 });
+  let state = { tab: "overview", ungraded: 100, courses: {} };
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (saved) state = { ...state, ...saved };
+    else {
+      const old = JSON.parse(localStorage.getItem("scores") || "null"); // first version of the app
+      if (old) state.courses.gt = { values: { midterm: old.midterm, bonus: old.bonus }, final: old.final };
+    }
+  } catch {}
+  for (const c of COURSES) state.courses[c.id] ??= blank();
+  if (state.tab !== "overview" && !COURSES.some((c) => c.id === state.tab)) state.tab = "overview";
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 
-  let saved = {};
-  try { saved = JSON.parse(localStorage.getItem("scores") || "{}"); } catch {}
-  const values = { ...defaults, ...saved };
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const num = (s) => { const v = parseFloat(String(s).replace(",", ".")); return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : null; };
+  const show = (v) => (v === null || v === undefined ? "" : v);
+  const totalOf = (c, f = state.courses[c.id].final) => courseTotal(c, state.courses[c.id].values, f, state.ungraded);
+  const needCell = (n) => n === null ? '<span class="muted">out of reach</span>' : n === 0 ? '<span class="ok">any score</span>' : fmt(n);
+  const badge = (letter, cls = "") => `<div class="badge ${cls} ${letter === "F" ? "f" : ""}">${letter}</div>`;
 
-  // Grade thresholds on the progress bar.
-  for (const g of GRADES) {
-    if (!g.min) continue;
-    const t = document.createElement("div");
-    t.className = "tick";
-    t.style.left = `${g.min}%`;
-    t.innerHTML = `<i>${g.letter}</i>`;
-    $("bar").appendChild(t);
+  // ---- tabs ---------------------------------------------------------------
+  function renderTabs() {
+    const tabs = [{ id: "overview", short: "Overview" }, ...COURSES];
+    $("#tabs").innerHTML = tabs.map((t) =>
+      `<button class="tab" role="tab" data-tab="${t.id}" aria-selected="${state.tab === t.id}">${t.short}</button>`).join("");
+  }
+  $("#tabs").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-tab]")?.dataset.tab;
+    if (id) go(id);
+  });
+  function go(id) {
+    state.tab = id;
+    save();
+    renderTabs();
+    render();
+    $(`[data-tab="${id}"]`)?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    window.scrollTo({ top: 0 });
   }
 
-  const clamp = (v, max) => Math.min(max, Math.max(0, Number.isFinite(v) ? v : 0));
-  let lastLetter;
+  // ---- overview -----------------------------------------------------------
+  const hasScores = (c) => c.parts.some((p) => !p.bonus && (p.count
+    ? (state.courses[c.id].values[p.key] ?? []).some((v) => v !== null && v !== undefined)
+    : state.courses[c.id].values[p.key] !== null && state.courses[c.id].values[p.key] !== undefined));
 
-  function render() {
-    const r = compute(values.midterm, values.final, values.bonus);
-    const g = letterFor(r.courseTotal);
-    $("badge").textContent = g.letter;
-    $("badge").classList.toggle("f", g.letter === "F");
-    $("total").innerHTML = `${fmt(r.courseTotal)} <span>/ 100</span>`;
-    $("part").textContent = `${fmt(r.componentPoints)} / 30`;
-    $("points").textContent = fmt(g.points);
-    $("fill").style.width = `${r.courseTotal}%`;
-    $("formula").innerHTML = [
-      `1/3 × ${fmt(r.midterm)} + 2/3 × ${fmt(r.final)} = ${fmt(r.weighted)}`,
-      r.bonus ? `× ${fmt(r.multiplier)} bonus = ${fmt(r.boosted)}${r.capped ? " → capped at 100" : ""}` : null,
-      `30% part = ${fmt(r.component)} × 0.3 = ${fmt(r.componentPoints)}`,
-      `Total = ${fmt(r.midterm)} × 0.3 + ${fmt(r.final)} × 0.4 + ${fmt(r.componentPoints)} = ${fmt(r.courseTotal)}`,
-    ].filter(Boolean).join("<br>");
+  function renderOverview() {
+    const totals = {};
+    const rows = COURSES.map((c) => {
+      if (!hasScores(c)) {
+        return `<div class="course" data-go="${c.id}">
+          <div class="badge sm empty">–</div>
+          <div class="info"><div class="name">${c.short}</div>
+            <div class="meta">${c.code} · ${c.credits} credits · tap to add your scores</div></div>
+          <div class="needs">›</div>
+        </div>`;
+      }
+      const t = (totals[c.id] = totalOf(c));
+      const g = letterFor(t);
+      const v = state.courses[c.id].values;
+      const forA = finalNeeded(c, v, 85, state.ungraded), forAp = finalNeeded(c, v, 93, state.ungraded);
+      return `<div class="course" data-go="${c.id}">
+        ${badge(g.letter, "sm")}
+        <div class="info"><div class="name">${c.short}</div>
+          <div class="meta">${c.code} · ${c.credits} credits · ${fmt(t)} with ${fmt(state.courses[c.id].final)} on final</div></div>
+        <div class="needs">A <b>${needCell(forA)}</b><br>A+ <b>${needCell(forAp)}</b></div>
+      </div>`;
+    }).join("");
+    const g = gpa(totals);
+    const counted = COURSES.filter((c) => totals[c.id] !== undefined);
+    $("#view").innerHTML = `
+      <section class="card">
+        <div class="big">${g === null ? "–" : fmt(g)} <span>/ 4.5 GPA</span></div>
+        <div class="row">${g === null ? "Add scores in a course to see your GPA"
+          : `From ${counted.length} of ${COURSES.length} courses · ${counted.reduce((s, c) => s + c.credits, 0)} credits`}</div>
+        <div class="row">Uses each course's expected final</div>
+      </section>
+      <section class="card">
+        <h2>Courses <span>Final needed for</span></h2>
+        ${rows}
+      </section>
+      <p class="note">Tap a course to enter scores and your expected final. Ungraded items count as ${state.ungraded}; you can change this inside any course.</p>`;
+    for (const el of document.querySelectorAll("[data-go]")) el.addEventListener("click", () => go(el.dataset.go));
+  }
 
-    $("needs").innerHTML = GRADES.filter((x) => x.letter !== "F").map((x) => {
-      const need = requiredFinal(values.midterm, values.bonus, x.min);
-      const cell = need.final === null ? '<span class="muted">out of reach</span>'
-        : need.final === 0 ? '<span class="ok">any score</span>'
-        : fmt(need.final);
-      return `<tr class="${x.letter === g.letter ? "current" : ""}"><td>${x.letter}</td><td>${x.min}+</td><td>${cell}</td></tr>`;
+  // ---- one course -------------------------------------------------------------
+  function renderCourse(c) {
+    const s = state.courses[c.id];
+    const fields = c.parts.map((p) => {
+      const weight = p.bonus ? "" : `<span class="w">${p.weight}%${p.best ? ` · best ${p.best} of ${p.count}` : ""}</span>`;
+      if (p.count) {
+        const items = Array.from({ length: p.count }, (_, i) =>
+          `<label>${p.label} ${i + 1}<input class="num" inputmode="decimal" data-part="${p.key}" data-i="${i}" placeholder="—" value="${show(s.values[p.key]?.[i])}"></label>`).join("");
+        return `<div class="field"><div class="field-head"><label>${p.label}s${weight}</label></div><div class="items">${items}</div></div>`;
+      }
+      const ph = p.bonus ? "0" : "—";
+      return `<div class="field"><div class="field-head"><label for="f-${p.key}">${p.label}${p.unit ? ` (${p.unit})` : ""}${weight}</label>
+        <input class="num" id="f-${p.key}" inputmode="decimal" data-part="${p.key}" placeholder="${ph}" value="${show(s.values[p.key])}"></div></div>`;
     }).join("");
 
-    if (lastLetter && lastLetter !== g.letter) tg?.HapticFeedback?.selectionChanged();
-    lastLetter = g.letter;
-    try { localStorage.setItem("scores", JSON.stringify(values)); } catch {}
+    $("#view").innerHTML = `
+      <section class="card">
+        <h2>${c.name} <span>${c.code} · ${c.credits} cr</span></h2>
+        ${fields}
+        <div class="setting">Not graded yet counts as
+          <span class="seg" role="group" aria-label="Ungraded items count as">
+            <button data-ungraded="100" aria-pressed="${state.ungraded === 100}">100</button>
+            <button data-ungraded="0" aria-pressed="${state.ungraded === 0}">0</button>
+          </span></div>
+      </section>
+      <section class="card">
+        <div class="field-head"><label for="final-n">Expected final <span class="w">${c.finalWeight}%</span></label>
+          <input class="num" id="final-n" inputmode="decimal" value="${s.final}"></div>
+        <input id="final" type="range" min="0" max="100" step="0.5" value="${s.final}" aria-label="Expected final">
+      </section>
+      <section class="card" aria-live="polite">
+        <div class="result">
+          <div id="badge"></div>
+          <div class="stats">
+            <div class="big" id="total"></div>
+            <div class="row">Before the final <b id="before"></b></div>
+            <div class="row">Grade points <b id="points"></b></div>
+          </div>
+        </div>
+        <div class="bar" id="bar"><div class="fill" id="fill"></div>${GRADES.filter((g) => g.min)
+          .map((g) => `<div class="tick" style="left:${g.min}%"><i>${g.letter}</i></div>`).join("")}</div>
+      </section>
+      <section class="card">
+        <h2>Final exam needed</h2>
+        <table><thead><tr><th>Grade</th><th>Total</th><th>Final needed</th></tr></thead><tbody id="needs"></tbody></table>
+        ${c.note ? `<p class="note">${c.note}</p>` : ""}
+      </section>`;
+
+    for (const input of document.querySelectorAll("[data-part]")) {
+      input.addEventListener("input", () => {
+        const { part, i } = input.dataset;
+        const v = num(input.value);
+        if (i === undefined) s.values[part] = v;
+        else (s.values[part] ??= [])[+i] = v;
+        update(c);
+      });
+    }
+    for (const b of document.querySelectorAll("[data-ungraded]")) {
+      b.addEventListener("click", () => { state.ungraded = +b.dataset.ungraded; save(); renderCourse(c); });
+    }
+    const slider = $("#final"), box = $("#final-n");
+    slider.addEventListener("input", () => { s.final = +slider.value; box.value = slider.value; update(c); });
+    box.addEventListener("input", () => { s.final = num(box.value) ?? 0; slider.value = s.final; update(c); });
+    box.addEventListener("blur", () => { box.value = s.final; });
+    update(c);
   }
 
-  for (const f of fields) {
-    const slider = $(f), box = $(`${f}-n`);
-    const max = Number(box.max);
-    slider.value = box.value = values[f];
-    slider.addEventListener("input", () => { values[f] = Number(slider.value); box.value = slider.value; render(); });
-    box.addEventListener("input", () => {
-      values[f] = clamp(parseFloat(box.value.replace(",", ".")), max);
-      slider.value = values[f];
-      render();
-    });
-    box.addEventListener("blur", () => { box.value = values[f]; });
+  let lastLetter;
+  function update(c) {
+    const s = state.courses[c.id];
+    const t = totalOf(c);
+    const g = letterFor(t);
+    $("#badge").outerHTML = `<div id="badge">${badge(g.letter)}</div>`;
+    $("#total").innerHTML = `${fmt(t)} <span>/ 100</span>`;
+    $("#before").textContent = c.formula === "gt" ? "depends on final" : `${fmt(totalOf(c, 0))} / ${100 - c.finalWeight}`;
+    $("#points").textContent = fmt(g.points);
+    $("#fill").style.width = `${t}%`;
+    $("#needs").innerHTML = GRADES.filter((x) => x.letter !== "F").map((x) =>
+      `<tr class="${x.letter === g.letter ? "current" : ""}"><td>${x.letter}</td><td>${x.min}+</td><td>${needCell(finalNeeded(c, s.values, x.min, state.ungraded))}</td></tr>`).join("");
+    if (lastLetter && lastLetter !== g.letter) tg?.HapticFeedback?.selectionChanged();
+    lastLetter = g.letter;
+    save();
   }
+
+  function render() {
+    lastLetter = undefined;
+    const c = COURSES.find((x) => x.id === state.tab);
+    c ? renderCourse(c) : renderOverview();
+  }
+
+  renderTabs();
   render();
 </script>
 </body>
